@@ -12,15 +12,21 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ isMobile, sidebarOpen, onViewChange, userRole, username, onLogout, currentView }) => {
   const getMenuItems = () => {
+    const baseItems = [
+      { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+      { id: 'workarea', label: 'Work Area', icon: '⚡' },
+    ];
+
     if (userRole === 'Admin' || userRole === 'Supervisor') {
       return [
-        { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+        ...baseItems,
         { id: 'orders', label: 'Order Entry', icon: '📝' },
         { id: 'users', label: 'User Management', icon: '👥' },
         { id: 'clients', label: 'Client Management', icon: '🏢' },
       ];
     } else {
       return [
+        ...baseItems,
         { id: 'queue', label: 'My Queue', icon: '📋' },
         { id: 'profile', label: 'Profile', icon: '👤' },
       ];

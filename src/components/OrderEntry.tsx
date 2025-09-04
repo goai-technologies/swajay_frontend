@@ -30,13 +30,17 @@ const OrderEntry: React.FC = () => {
   const [formData, setFormData] = useState({
     client: '',
     orderType: '',
-    fileNumber: '',
-    propertyAddress: '',
-    county: '',
+    clientOrderNumber: '',
+    propertyAddressLine1: '',
+    propertyAddressLine2: '',
+    city: '',
     state: '',
-    borrowerName: '',
-    isRush: false,
-    sla: ''
+    zipCode: '',
+    county: '',
+    ownerName: '',
+    onlineGround: 'Online',
+    rushFile: 'No',
+    comments: ''
   });
 
   const [clients, setClients] = useState<Client[]>([]);
@@ -103,19 +107,47 @@ const OrderEntry: React.FC = () => {
       return;
     }
 
+    // Validate required fields
+    const requiredFields = [
+      { field: 'client', name: 'Client' },
+      { field: 'orderType', name: 'Order Type' },
+      { field: 'clientOrderNumber', name: 'Client Order Number' },
+      { field: 'ownerName', name: 'Owner Name' },
+      { field: 'propertyAddressLine1', name: 'Property Address Line 1' },
+      { field: 'city', name: 'City' },
+      { field: 'state', name: 'State' },
+      { field: 'county', name: 'County' }
+    ];
+
+    const missingFields = requiredFields.filter(({ field }) => !formData[field as keyof typeof formData]);
+    
+    if (missingFields.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: `Please fill in the following required fields: ${missingFields.map(f => f.name).join(', ')}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
-      // Prepare the order data according to the API specification
+      // Prepare the order data according to the updated API specification
       const orderData = {
         client_id: formData.client,
         order_type: formData.orderType,
-        file_number: formData.fileNumber,
-        borrower_name: formData.borrowerName,
-        property_address: formData.propertyAddress,
+        client_order_number: formData.clientOrderNumber,
+        owner_name: formData.ownerName,
+        property_address_line1: formData.propertyAddressLine1,
+        property_address_line2: formData.propertyAddressLine2,
+        city: formData.city,
         county: formData.county,
         state: formData.state,
-        rush_order: formData.isRush
+        zip_code: formData.zipCode,
+        online_ground: formData.onlineGround,
+        rush_file: formData.rushFile,
+        comments: formData.comments
       };
 
       console.log('Submitting order data:', orderData);
@@ -139,20 +171,24 @@ const OrderEntry: React.FC = () => {
       if (data.success) {
         toast({
           title: "Success",
-          description: `Order ${formData.fileNumber} created successfully!`,
+          description: `Order ${formData.clientOrderNumber} created successfully!`,
         });
 
         // Reset form
         setFormData({
           client: '',
           orderType: '',
-          fileNumber: '',
-          propertyAddress: '',
-          county: '',
+          clientOrderNumber: '',
+          propertyAddressLine1: '',
+          propertyAddressLine2: '',
+          city: '',
           state: '',
-          borrowerName: '',
-          isRush: false,
-          sla: ''
+          zipCode: '',
+          county: '',
+          ownerName: '',
+          onlineGround: 'Online',
+          rushFile: 'No',
+          comments: ''
         });
 
         // Navigate to dashboard or my queue after a short delay
@@ -185,188 +221,311 @@ const OrderEntry: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800 mb-2">Order Entry</h1>
-        <p className="text-gray-600">Create a new workflow order</p>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <style jsx>{`
+        .toggle-checkbox:checked {
+          right: 0;
+          border-color: #3b82f6;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+          background-color: #3b82f6;
+        }
+      `}</style>
+      
+      {/* Header with toggle and clear */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-semibold text-gray-800">Order Entry</h1>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Order Entry</span>
+            <div className="relative inline-block w-12 h-6 mr-2 align-middle select-none">
+              <input 
+                type="checkbox" 
+                name="toggle" 
+                id="toggle" 
+                className="absolute right-0 w-6 h-6 rounded-full bg-white border-2 border-gray-300 appearance-none cursor-pointer transition-all duration-300 checked:right-6 checked:border-blue-500" 
+                defaultChecked
+              />
+              <label 
+                htmlFor="toggle" 
+                className="block overflow-hidden h-6 rounded-full bg-blue-500 cursor-pointer"
+              ></label>
+            </div>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          className="flex items-center space-x-2 text-blue-600 hover:text-blue-800"
+          onClick={() => setFormData({
+            client: '',
+            orderType: '',
+            clientOrderNumber: '',
+            propertyAddressLine1: '',
+            propertyAddressLine2: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            county: '',
+            ownerName: '',
+            onlineGround: 'Online',
+            rushFile: 'No',
+            comments: ''
+          })}
+        >
+          <span>Clear All</span>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Client *
-            </label>
-            {clientsError && (
-              <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-600">{clientsError}</p>
-                <button
-                  type="button"
-                  onClick={fetchClients}
-                  className="mt-1 text-xs text-red-700 underline hover:no-underline"
-                >
-                  Retry
-                </button>
-              </div>
-            )}
-            <select
-              value={formData.client}
-              onChange={(e) => handleInputChange('client', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              required
-              disabled={clientsLoading}
-            >
-              <option value="">
-                {clientsLoading ? 'Loading clients...' : 'Select Client'}
-              </option>
-              {clients.map(client => (
-                <option key={client.id} value={client.id}>
-                  {client.name} - {client.email}
-                </option>
-              ))}
-            </select>
-            {clientsLoading && (
-              <p className="mt-1 text-xs text-gray-500">Loading client data...</p>
-            )}
-            {formData.client && getSelectedClient() && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <h4 className="text-sm font-medium text-blue-900 mb-1">Selected Client Details:</h4>
-                <div className="text-xs text-blue-800 space-y-1">
-                  <p><strong>Name:</strong> {getSelectedClient()?.name}</p>
-                  <p><strong>Email:</strong> {getSelectedClient()?.email}</p>
-                  <p><strong>Phone:</strong> {getSelectedClient()?.phone}</p>
-                  <p><strong>Address:</strong> {getSelectedClient()?.address}</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Order Type *
-            </label>
-            <select
-              value={formData.orderType}
-              onChange={(e) => handleInputChange('orderType', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select Order Type</option>
-              {ORDER_TYPES.map(type => (
-                <option key={type} value={type}>
-                  {type} - {ORDER_TYPE_DESCRIPTIONS[type]}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              File Number *
-            </label>
-            <input
-              type="text"
-              value={formData.fileNumber}
-              onChange={(e) => handleInputChange('fileNumber', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="SW-2024-XXX"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Borrower Name *
-            </label>
-            <input
-              type="text"
-              value={formData.borrowerName}
-              onChange={(e) => handleInputChange('borrowerName', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Property Address *
-            </label>
-            <input
-              type="text"
-              value={formData.propertyAddress}
-              onChange={(e) => handleInputChange('propertyAddress', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              County *
-            </label>
-            <input
-              type="text"
-              value={formData.county}
-              onChange={(e) => handleInputChange('county', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              State *
-            </label>
-            <select
-              value={formData.state}
-              onChange={(e) => handleInputChange('state', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select State</option>
-              {states.map(state => (
-                <option key={state} value={state}>{state}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="lg:col-span-2">
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.isRush}
-                  onChange={(e) => handleInputChange('isRush', e.target.checked)}
-                  className="mr-2 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                />
-                <span className="text-sm font-medium text-gray-700">Rush Order</span>
-                {formData.isRush && (
-                  <span className="ml-2 px-2 py-1 text-xs font-semibold bg-orange-100 text-orange-800 rounded-full">
-                    RUSH
-                  </span>
-                )}
+      <div className="bg-white rounded-lg shadow-sm p-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* First Row: Client Order Number, Order Type, Clients, Prop Address Line 1 */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Client Order Number *
               </label>
+              <input
+                type="text"
+                value={formData.clientOrderNumber}
+                onChange={(e) => handleInputChange('clientOrderNumber', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="1234"
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd"/>
+                </svg>
+                Order Type *
+              </label>
+              <select
+                value={formData.orderType}
+                onChange={(e) => handleInputChange('orderType', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Order Type</option>
+                {ORDER_TYPES.map(type => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                </svg>
+                Clients *
+              </label>
+              <select
+                value={formData.client}
+                onChange={(e) => handleInputChange('client', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                disabled={clientsLoading}
+              >
+                <option value="">
+                  {clientsLoading ? 'Loading...' : 'Clients'}
+                </option>
+                {clients.map(client => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                </svg>
+                Prop Address Line 1 *
+              </label>
+              <input
+                type="text"
+                value={formData.propertyAddressLine1}
+                onChange={(e) => handleInputChange('propertyAddressLine1', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
 
-          <div className="lg:col-span-2 flex space-x-4 pt-4">
+          {/* Second Row: Prop Address Line 2, City, State, Zip Code */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                </svg>
+                Prop Address Line 2
+              </label>
+              <input
+                type="text"
+                value={formData.propertyAddressLine2}
+                onChange={(e) => handleInputChange('propertyAddressLine2', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                </svg>
+                City *
+              </label>
+              <input
+                type="text"
+                value={formData.city}
+                onChange={(e) => handleInputChange('city', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                </svg>
+                State *
+              </label>
+              <select
+                value={formData.state}
+                onChange={(e) => handleInputChange('state', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">State</option>
+                {states.map(state => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                </svg>
+                Zip Code
+              </label>
+              <input
+                type="text"
+                value={formData.zipCode}
+                onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Third Row: County, Owner Name, Online/Ground, Rush File */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                </svg>
+                County *
+              </label>
+              <input
+                type="text"
+                value={formData.county}
+                onChange={(e) => handleInputChange('county', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                </svg>
+                Owner Name *
+              </label>
+              <input
+                type="text"
+                value={formData.ownerName}
+                onChange={(e) => handleInputChange('ownerName', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd"/>
+                </svg>
+                Online/Ground
+              </label>
+              <select
+                value={formData.onlineGround}
+                onChange={(e) => handleInputChange('onlineGround', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Online">Online</option>
+                <option value="Ground">Ground</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                </svg>
+                Rush File
+              </label>
+              <select
+                value={formData.rushFile}
+                onChange={(e) => handleInputChange('rushFile', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Comments Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Comments
+            </label>
+            <textarea
+              value={formData.comments}
+              onChange={(e) => handleInputChange('comments', e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              placeholder="Enter any additional comments or notes..."
+            />
+          </div>
+
+          {/* Submit Buttons */}
+          <div className="flex space-x-4 pt-6">
             <button
               type="submit"
               disabled={isSubmitting || clientsLoading}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors flex items-center space-x-2"
+              className="flex-1 px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors flex items-center justify-center space-x-2"
             >
               {isSubmitting && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               )}
-              <span>{isSubmitting ? 'Creating Order...' : 'Save Order'}</span>
+              <span>{isSubmitting ? 'Creating...' : 'Submit Order Entry'}</span>
             </button>
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => setCurrentView('dashboard')}
-              className="px-6 py-2 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors"
+              className="flex-1 px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors"
             >
-              Cancel
+              Modify Order Entry
             </button>
           </div>
         </form>

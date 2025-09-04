@@ -9,11 +9,14 @@ import MyQueue from './MyQueue';
 import OrderEntry from './OrderEntry';
 import UserManagement from './UserManagement';
 import ClientManagement from './ClientManagement';
+import WorkArea from './WorkArea';
+import Profile from './Profile';
 
 const AppLayout: React.FC = () => {
   const { sidebarOpen, toggleSidebar, currentView, setCurrentView } = useAppContext();
   const { user, logout, isLoading } = useAuth();
   const isMobile = useIsMobile();
+
 
 
 
@@ -40,6 +43,8 @@ const AppLayout: React.FC = () => {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard userRole={user.role} />;
+      case 'workarea':
+        return <WorkArea />;
       case 'queue':
         return <MyQueue />;
       case 'orders':
@@ -48,7 +53,10 @@ const AppLayout: React.FC = () => {
         return <UserManagement />;
       case 'clients':
         return <ClientManagement />;
+      case 'profile':
+        return <Profile />;
       default:
+        // Default view should be dashboard for all users now
         return <Dashboard userRole={user.role} />;
     }
   };

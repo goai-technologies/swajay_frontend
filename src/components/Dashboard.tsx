@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Eye } from 'lucide-react';
+import OrderLogDialog from './OrderLogDialog';
 
 interface Order {
   id: string;
   client_id: string;
+  client_name?: string;
+  file_number?: string;
   status: string;
   priority: string;
   created_at: string;
@@ -34,14 +39,42 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
+  const [clients, setClients] = useState<{[key: string]: string}>({});
   const { axiosInstance, token, user } = useAuth();
 
 
   useEffect(() => {
     if (token && user) {
+      fetchClients();
       fetchOrders();
     }
   }, [token, user]);
+
+  const fetchClients = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/clients?page=1&page_size=100', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data.items) {
+          const clientMap: {[key: string]: string} = {};
+          data.data.items.forEach((client: any) => {
+            clientMap[client.id] = client.name;
+          });
+          setClients(clientMap);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -142,6 +175,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const handleViewLog = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setIsLogDialogOpen(true);
+  };
+
   const metrics = calculateMetrics();
   const recentOrders = orders.slice(0, 10); // Show first 10 orders
 
@@ -232,7 +270,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-slate-800">Recent Orders</h2>
           <button
-            onClick={fetchOrders}
+            onClick={() => {
+              fetchClients();
+              fetchOrders();
+            }}
             className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Refresh
@@ -242,12 +283,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">File Number</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -255,10 +297,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
                 recentOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm font-medium text-slate-800">
-                      {order.id.slice(0, 8)}...
+                      {order.file_number || 'N/A'}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600" title={order.client_id}>
-                      {order.client_id.slice(0, 8)}...
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {clients[order.client_id] || 'Loading...'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {order.order_type || 'N/A'}
@@ -274,11 +316,22 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{formatDate(order.created_at)}</td>
+                    <td className="px-6 py-4">
+                      <Button
+                        onClick={() => handleViewLog(order.id)}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center space-x-1"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span>View Log</span>
+                      </Button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                     No orders found
                   </td>
                 </tr>
@@ -287,6 +340,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
           </table>
         </div>
       </div>
+      
+      {selectedOrderId && (
+        <OrderLogDialog
+          orderId={selectedOrderId}
+          open={isLogDialogOpen}
+          onOpenChange={setIsLogDialogOpen}
+        />
+      )}
     </div>
   );
 };
