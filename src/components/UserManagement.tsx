@@ -85,7 +85,7 @@ interface UserFormData {
   name: string;
   email: string;
   password?: string;
-  role: User['role'];
+  // role removed from creation UI
   phone_number: string;
   company: string;
   address: string;
@@ -96,7 +96,6 @@ interface UserFormData {
   clients: string[];
   skip_qc: string;
   order_types: string[];
-  skills: string[];
 }
 
 const UserManagement: React.FC = () => {
@@ -108,7 +107,6 @@ const UserManagement: React.FC = () => {
     name: '',
     email: '',
     password: '',
-    role: 'Processor',
     phone_number: '',
     company: '',
     address: '',
@@ -118,8 +116,7 @@ const UserManagement: React.FC = () => {
     select_states: [],
     clients: [],
     skip_qc: 'No',
-    order_types: [],
-    skills: []
+    order_types: []
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -189,8 +186,7 @@ const UserManagement: React.FC = () => {
           select_states: formData.select_states.join(','),
           clients: formData.clients.join(','),
           skip_qc: formData.skip_qc,
-          order_types: formData.order_types.join(','),
-          skills: formData.skills.join(',')
+          order_types: formData.order_types.join(',')
         }),
       });
 
@@ -329,7 +325,6 @@ const UserManagement: React.FC = () => {
       name: '',
       email: '',
       password: '',
-      role: 'Processor',
       phone_number: '',
       company: '',
       address: '',
@@ -339,8 +334,7 @@ const UserManagement: React.FC = () => {
       select_states: [],
       clients: [],
       skip_qc: 'No',
-      order_types: [],
-      skills: []
+      order_types: []
     });
     setSelectedUser(null);
   };
@@ -352,7 +346,6 @@ const UserManagement: React.FC = () => {
         username: user.username,
         name: user.name || '',
         email: user.email,
-        role: user.role,
         phone_number: user.phone_number || '',
         company: user.company || '',
         address: user.address || '',
@@ -362,8 +355,7 @@ const UserManagement: React.FC = () => {
         select_states: user.select_states ? user.select_states.split(',') : [],
         clients: user.clients ? user.clients.split(',') : [],
         skip_qc: user.skip_qc || 'No',
-        order_types: user.order_types ? user.order_types.split(',') : [],
-        skills: user.skills ? user.skills.split(',') : []
+        order_types: user.order_types ? user.order_types.split(',') : []
       });
     } else {
       resetForm();
@@ -681,7 +673,7 @@ const UserManagement: React.FC = () => {
                 </div>
               </div>
 
-              {/* Fourth Row: Skip QC, Order Types, Skills, Role */}
+              {/* Fourth Row: Skip QC, Order Types */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
@@ -711,52 +703,22 @@ const UserManagement: React.FC = () => {
                     </svg>
                     Order Types
                   </label>
-                  <Input
-                    value={formData.order_types.join(',')}
-                    onChange={(e) => setFormData(prev => ({ ...prev, order_types: e.target.value.split(',').map(s => s.trim()) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="COS,Commitment Review,TOS,FS,Document Retrieval"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd"/>
-                    </svg>
-                    Skills
-                  </label>
-                  <Input
-                    value={formData.skills.join(',')}
-                    onChange={(e) => setFormData(prev => ({ ...prev, skills: e.target.value.split(',').map(s => s.trim()) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="COS,Commitment Review,TOS,FS,Document Retrieval"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd"/>
-                    </svg>
-                    Role *
-                  </label>
                   <Select
-                    value={formData.role}
-                    onValueChange={(value: User['role']) => setFormData(prev => ({ ...prev, role: value }))}
+                    value={formData.order_types.join(',')}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, order_types: value ? [value] : [] }))}
                   >
                     <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <SelectValue placeholder="Select role" />
+                      <SelectValue placeholder="Select Order Types" />
                     </SelectTrigger>
                     <SelectContent>
-                      {['Admin', 'Supervisor', 'Processor', 'QC', 'Typist', 'Auditor'].map(role => (
-                        <SelectItem key={role} value={role as User['role']}>
-                          {role}
-                        </SelectItem>
+                      {ORDER_TYPES.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* removed Skills and Role fields as requested */}
               </div>
 
               {/* Submit Buttons */}
