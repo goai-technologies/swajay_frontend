@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { toast } from '@/components/ui/use-toast';
 import { ORDER_TYPES } from '@/constants/orderTypes';
+import { US_STATES } from '@/constants/states';
 import { 
   Edit, 
   Trash2, 
@@ -38,13 +41,12 @@ const CLIENT_NAMES = [
   'VTR',
   'FlexC'
 ];
-const US_STATES = [
-  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
-];
+// Convert US_STATES to MultiSelectOption format
+const stateOptions = US_STATES.map(state => ({
+  value: state.value,
+  label: state.label,
+  abbreviation: state.abbreviation
+}));
 
 interface User {
   id: string;
@@ -128,7 +130,7 @@ const UserManagement: React.FC = () => {
     
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:5001/users?page=1&page_size=50', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.USERS}?page=1&page_size=50`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -162,11 +164,10 @@ const UserManagement: React.FC = () => {
   const handleCreateUser = async () => {
     if (!token || isSubmitting) return;
     
-    console.log('Creating user with data:', formData);
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('http://localhost:5001/users', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.USERS}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -243,7 +244,7 @@ const UserManagement: React.FC = () => {
         skills: formData.skills.join(',')
       };
 
-      const response = await fetch(`http://localhost:5001/users/${selectedUser.id}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.USER_BY_ID(selectedUser.id)}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -285,7 +286,7 @@ const UserManagement: React.FC = () => {
     if (!token) return;
     
     try {
-      const response = await fetch(`http://localhost:5001/users/${userId}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.USER_BY_ID(userId)}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -367,7 +368,7 @@ const UserManagement: React.FC = () => {
     if (!token) return;
     
     try {
-      const response = await fetch('http://localhost:5001/clients?page=1&page_size=100', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.CLIENTS}?page=1&page_size=100`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -395,10 +396,9 @@ const UserManagement: React.FC = () => {
     }
   }, [token]);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Form submitted, preventing default', { formData, selectedUser });
     
     // Additional check to ensure we don't have any undefined values causing issues
     if (!formData.username || !formData.email || (!selectedUser && !formData.password)) {
@@ -411,32 +411,18 @@ const UserManagement: React.FC = () => {
     }
     
     selectedUser ? handleUpdateUser() : handleCreateUser();
-  };
+  }, [formData, selectedUser, handleUpdateUser, handleCreateUser]);
 
   const UserDialog = () => (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <div className="p-6 bg-gray-50">
-          {/* Header with toggle and clear */}
+          {/* Header with clear */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-semibold text-gray-800">Add User</h1>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Add User</span>
-                <div className="relative inline-block w-12 h-6 mr-2 align-middle select-none">
-                  <input 
-                    type="checkbox" 
-                    name="toggle" 
-                    id="user-toggle" 
-                    className="absolute right-0 w-6 h-6 rounded-full bg-white border-2 border-gray-300 appearance-none cursor-pointer transition-all duration-300 checked:right-6 checked:border-blue-500" 
-                    defaultChecked
-                  />
-                  <label 
-                    htmlFor="user-toggle" 
-                    className="block overflow-hidden h-6 rounded-full bg-blue-500 cursor-pointer"
-                  ></label>
-                </div>
-              </div>
+              <h1 className="text-2xl font-semibold text-gray-800">
+                {selectedUser ? 'Edit User' : 'Add User'}
+              </h1>
             </div>
             <button 
               type="button" 
@@ -445,7 +431,7 @@ const UserManagement: React.FC = () => {
             >
               <span>Clear All</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
           </div>
@@ -642,11 +628,14 @@ const UserManagement: React.FC = () => {
                     </svg>
                     Select States
                   </label>
-                  <Input
-                    value={formData.select_states.join(',')}
-                    onChange={(e) => setFormData(prev => ({ ...prev, select_states: e.target.value.split(',').map(s => s.trim()) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="OH,MI,PA"
+                  <MultiSelect
+                    options={stateOptions}
+                    selected={formData.select_states}
+                    onChange={(selected) => setFormData(prev => ({ ...prev, select_states: selected }))}
+                    placeholder="Select states..."
+                    showAbbreviation={true}
+                    maxDisplay={3}
+                    className="w-full"
                   />
                 </div>
 
@@ -731,14 +720,12 @@ const UserManagement: React.FC = () => {
                   {isSubmitting && (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   )}
-                  <span>{isSubmitting ? 'Creating...' : 'Create User'}</span>
-                </Button>
-                <Button
-                  type="button"
-                  disabled={isSubmitting}
-                  className="flex-1 px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors"
-                >
-                  Modify User
+                  <span>
+                    {isSubmitting 
+                      ? (selectedUser ? 'Updating...' : 'Creating...') 
+                      : (selectedUser ? 'Edit User' : 'Create User')
+                    }
+                  </span>
                 </Button>
               </div>
             </form>
@@ -756,7 +743,7 @@ const UserManagement: React.FC = () => {
           <p className="text-gray-600 mt-1">Manage system users and their roles</p>
         </div>
         <Button onClick={() => openUserDialog()}>
-          <UserPlus className="mr-2 h-4 w-4" /> Add New User
+          <UserPlus className="mr-2 h-4 w-4" /> Add User
         </Button>
       </div>
 

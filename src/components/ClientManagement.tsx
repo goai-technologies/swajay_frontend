@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiUrls, createFetchRequest } from '@/utils/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -24,12 +25,11 @@ const ClientManagement: React.FC = () => {
   const fetchClients = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:5001/clients?page=1&page_size=50', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await createFetchRequest(
+        apiUrls.clients({ page: 1, page_size: 50 }),
+        token,
+        { method: 'GET' }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -67,7 +67,11 @@ const ClientManagement: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 422) {
+          throw new Error('Invalid email format. Please enter a valid email address.');
+        }
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -107,7 +111,11 @@ const ClientManagement: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 422) {
+          throw new Error('Invalid email format. Please enter a valid email address.');
+        }
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -186,8 +194,18 @@ const ClientManagement: React.FC = () => {
           </label>
           <Input 
             value={phone} 
-            onChange={(e) => setPhone(e.target.value)} 
-            placeholder="Enter phone number"
+            onChange={(e) => {
+              // Format phone number as user types
+              let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+              if (value.length >= 6) {
+                value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
+              } else if (value.length >= 3) {
+                value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+              }
+              setPhone(value);
+            }}
+            placeholder="(555) 123-4567"
+            maxLength={14}
           />
         </div>
         <div>
@@ -222,7 +240,7 @@ const ClientManagement: React.FC = () => {
               setSelectedClient(null);
               setIsDialogOpen(true);
             }}>
-              Add New Client
+              Add Client
             </Button>
           </DialogTrigger>
           <DialogContent>

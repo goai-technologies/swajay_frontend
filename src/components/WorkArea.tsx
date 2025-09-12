@@ -129,8 +129,6 @@ const WorkArea: React.FC = () => {
   const handleRequestNewWork = async () => {
     if (!token || !user || isRequestingWork) return;
 
-    console.log('Requesting work for user:', user.id);
-    console.log('Using token:', token.substring(0, 20) + '...');
 
     try {
       setIsRequestingWork(true);
@@ -158,7 +156,6 @@ const WorkArea: React.FC = () => {
       }
 
       const data: RequestWorkResponse = await response.json();
-      console.log('Request work response:', data);
       
       if (data.success && data.data.success) {
         toast({
@@ -278,7 +275,7 @@ const WorkArea: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="p-6 bg-gray-100 h-full overflow-y-auto">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -291,7 +288,7 @@ const WorkArea: React.FC = () => {
 
   if (!dashboardData) {
     return (
-      <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="p-6 bg-gray-100 h-full overflow-y-auto">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Unable to Load Work Area</h2>
@@ -306,19 +303,19 @@ const WorkArea: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 bg-gray-100 h-full overflow-y-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">Work Area</h1>
-          <p className="text-gray-600 mt-1">
-            Welcome back, {dashboardData.username} ({dashboardData.user_role})
-          </p>
         </div>
         <div className="flex space-x-3">
-          <Button onClick={fetchDashboard} variant="outline">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
+          <Button 
+            onClick={fetchDashboard} 
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Refresh</span>
           </Button>
           {dashboardData.can_request_new_work && (
             <Button 
@@ -349,7 +346,7 @@ const WorkArea: React.FC = () => {
               <FileText className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Items</p>
-                <p className="text-2xl font-bold text-gray-900">{dashboardData.summary.total_items}</p>
+                <p className="text-2xl font-bold text-gray-900">{dashboardData.work_items.length}</p>
               </div>
             </div>
           </CardContent>
@@ -361,7 +358,9 @@ const WorkArea: React.FC = () => {
               <Clock className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">In Progress</p>
-                <p className="text-2xl font-bold text-gray-900">{dashboardData.summary.in_progress}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {dashboardData.work_items.filter(item => item.step_status === 'In Progress').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -373,7 +372,9 @@ const WorkArea: React.FC = () => {
               <CheckCircle className="h-8 w-8 text-green-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">{dashboardData.summary.completed}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {dashboardData.work_items.filter(item => item.step_status === 'Completed').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -385,7 +386,9 @@ const WorkArea: React.FC = () => {
               <AlertCircle className="h-8 w-8 text-yellow-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">{dashboardData.summary.pending}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {dashboardData.work_items.filter(item => item.step_status === 'Pending').length}
+                </p>
               </div>
             </div>
           </CardContent>

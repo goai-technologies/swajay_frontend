@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import axios from 'axios';
+import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 
 interface User {
   id: string;
@@ -14,12 +15,13 @@ interface AuthContextType {
   logout: () => void;
   axiosInstance: any;
   isLoading: boolean;
+  setResetViewCallback: (callback: () => void) => void;
 }
 
 // Create an axios instance with interceptors
 const createAxiosInstance = (token: string | null, logoutCallback?: () => void) => {
   const instance = axios.create({
-    baseURL: 'http://localhost:5001',
+    baseURL: API_CONFIG.BASE_URL,
     headers: token ? { Authorization: `Bearer ${token}` } : {}
   });
 
@@ -47,6 +49,7 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [token, setToken] = useState<string | null>(null);
   const [axiosInstance, setAxiosInstance] = useState(() => createAxiosInstance(null));
   const [isLoading, setIsLoading] = useState(false);
+  const [resetViewCallback, setResetViewCallback] = useState<(() => void) | null>(null);
 
   const logout = () => {
     setUser(null);
@@ -56,12 +59,17 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     // Reset axios instance
     setAxiosInstance(createAxiosInstance(null));
+    
+    // Reset view to dashboard
+    if (resetViewCallback) {
+      resetViewCallback();
+    }
   };
 
   const login = async (username: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5001/users/login', {
+      const response = await axios.post(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.LOGIN}`, {
         username,
         password
       });
@@ -106,12 +114,21 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     if (storedToken && storedUser) {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-        
-        // Create axios instance with stored token
-        const newAxiosInstance = createAxiosInstance(storedToken, logout);
-        setAxiosInstance(newAxiosInstance);
+        const parsedUser = JSON.parse(storedUser);
+        // Validate user object has required properties
+        if (parsedUser && parsedUser.id && parsedUser.username && parsedUser.role) {
+          setToken(storedToken);
+          setUser(parsedUser);
+          
+          // Create axios instance with stored token
+          const newAxiosInstance = createAxiosInstance(storedToken, logout);
+          setAxiosInstance(newAxiosInstance);
+        } else {
+          console.error('Invalid user data structure:', parsedUser);
+          // Clear invalid data
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+        }
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         // Clear invalid data
@@ -128,7 +145,8 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
     login,
     logout,
     axiosInstance,
-    isLoading
+    isLoading,
+    setResetViewCallback
   };
 
   return (

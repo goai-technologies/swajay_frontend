@@ -42,6 +42,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
   const [clients, setClients] = useState<{[key: string]: string}>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
   const { axiosInstance, token, user } = useAuth();
 
 
@@ -76,13 +79,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('🔄 Fetching orders...');
-      console.log('🔑 Using token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
       
       if (!token) {
         setError('No authentication token available');
@@ -93,37 +93,28 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
         'Authorization': `Bearer ${token}`,
       };
       
-      console.log('📤 Request headers:', headers);
-      console.log('📤 Request URL:', 'http://localhost:5001/orders?page=1&page_size=50');
-      
       // Use direct fetch call with corrected headers
-      const response = await fetch('http://localhost:5001/orders?page=1&page_size=50', {
+      const response = await fetch(`http://localhost:5001/orders?page=${page}&page_size=10`, {
         method: 'GET',
         headers: headers,
       });
       
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response ok:', response.ok);
-      
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Response error text:', errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       
       const data = await response.json();
-      console.log('📡 Orders API Response:', data);
       
       if (data.success) {
         setOrders(data.data.items);
-        console.log('✅ Orders loaded successfully:', data.data.items.length, 'orders');
+        setTotalPages(data.data.pagination.total_pages);
+        setTotalOrders(data.data.pagination.total_count);
       } else {
-        console.error('❌ API returned success: false');
         setError('Failed to fetch orders: ' + data.message);
       }
     } catch (err: any) {
-      console.error('❌ Error fetching orders:', err);
-      console.error('❌ Error message:', err.message);
+      console.error('Error fetching orders:', err);
       setError('Failed to fetch orders: ' + err.message);
     } finally {
       setLoading(false);
@@ -131,17 +122,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
   };
 
   const calculateMetrics = () => {
-    const totalOrders = orders.length;
     const inProgress = orders.filter(order => order.status === 'In Progress').length;
     const completed = orders.filter(order => order.status === 'Completed').length;
     const onHold = orders.filter(order => order.status === 'On Hold').length;
     const newOrders = orders.filter(order => order.status === 'New').length;
 
     return [
-      { title: 'Total Orders', value: totalOrders.toString(), change: '+12%', color: 'blue' },
-      { title: 'Work in Progress', value: inProgress.toString(), change: '+5%', color: 'orange' },
-      { title: 'Completed', value: completed.toString(), change: '+18%', color: 'green' },
-      { title: 'On Hold', value: onHold.toString(), change: '-25%', color: 'red' },
+      { title: 'Total Orders', value: totalOrders.toString(), change: null as string | null, color: 'blue' },
+      { title: 'Work in Progress', value: inProgress.toString(), change: null as string | null, color: 'orange' },
+      { title: 'Completed', value: completed.toString(), change: null as string | null, color: 'green' },
+      { title: 'On Hold', value: onHold.toString(), change: null as string | null, color: 'red' },
     ];
   };
 
@@ -181,14 +171,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
   };
 
   const metrics = calculateMetrics();
-  const recentOrders = orders.slice(0, 10); // Show first 10 orders
 
   if (loading) {
     return (
-      <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="p-6 bg-gray-100 h-full overflow-y-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Loading your workflow overview...</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -218,10 +206,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
 
   if (error) {
     return (
-      <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="p-6 bg-gray-100 h-full overflow-y-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Here's your workflow overview.</p>
         </div>
         
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -242,10 +229,21 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="mb-8">
+    <div className="p-6 bg-gray-100 h-full overflow-y-auto">
+      <div className="mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-slate-800 mb-2">Dashboard</h1>
-        <p className="text-gray-600">Welcome back! Here's your workflow overview.</p>
+        <button
+          onClick={() => {
+            fetchClients();
+            fetchOrders(currentPage);
+          }}
+          className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>Refresh</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -256,30 +254,23 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
                 <p className="text-sm text-gray-600 mb-1">{metric.title}</p>
                 <p className="text-2xl font-bold text-slate-800">{metric.value}</p>
               </div>
-              <div className={`text-sm font-medium ${
-                metric.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {metric.change}
-              </div>
+              {metric.change && (
+                <div className={`text-sm font-medium ${
+                  metric.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {metric.change}
+                </div>
+              )}
             </div>
           </div>
         ))}
       </div>
 
       <div className="bg-white rounded-lg shadow-sm">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-slate-800">Recent Orders</h2>
-          <button
-            onClick={() => {
-              fetchClients();
-              fetchOrders();
-            }}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Refresh
-          </button>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-96 overflow-y-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
@@ -293,8 +284,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {recentOrders.length > 0 ? (
-                recentOrders.map((order) => (
+              {orders.length > 0 ? (
+                orders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm font-medium text-slate-800">
                       {order.file_number || 'N/A'}
@@ -339,6 +330,44 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, totalOrders)} of {totalOrders} orders
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => {
+                  if (currentPage > 1) {
+                    setCurrentPage(currentPage - 1);
+                    fetchOrders(currentPage - 1);
+                  }
+                }}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="px-3 py-1 text-sm text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => {
+                  if (currentPage < totalPages) {
+                    setCurrentPage(currentPage + 1);
+                    fetchOrders(currentPage + 1);
+                  }
+                }}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       
       {selectedOrderId && (

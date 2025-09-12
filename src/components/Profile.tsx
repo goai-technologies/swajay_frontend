@@ -58,7 +58,7 @@ const Profile: React.FC = () => {
                 <User className="h-8 w-8 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{user.name || user.username}</h3>
+                <h3 className="text-xl font-semibold text-gray-900">{user.username}</h3>
                 <p className="text-gray-600">@{user.username}</p>
               </div>
             </div>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ORDER_TYPES, ORDER_TYPE_DESCRIPTIONS } from '@/constants/orderTypes';
+import { US_STATES } from '@/constants/states';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { useAppContext } from '@/contexts/AppContext';
+import { MultiSelect } from '@/components/ui/multi-select';
 
 interface Client {
   id: string;
@@ -34,7 +36,7 @@ const OrderEntry: React.FC = () => {
     propertyAddressLine1: '',
     propertyAddressLine2: '',
     city: '',
-    state: '',
+    states: [] as string[],
     zipCode: '',
     county: '',
     ownerName: '',
@@ -50,13 +52,12 @@ const OrderEntry: React.FC = () => {
   const { token } = useAuth();
   const { setCurrentView } = useAppContext();
 
-  const states = [
-    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
-  ];
+  // Convert US_STATES to MultiSelectOption format
+  const stateOptions = US_STATES.map(state => ({
+    value: state.value,
+    label: state.label,
+    abbreviation: state.abbreviation
+  }));
 
   useEffect(() => {
     if (token) {
@@ -115,11 +116,17 @@ const OrderEntry: React.FC = () => {
       { field: 'ownerName', name: 'Owner Name' },
       { field: 'propertyAddressLine1', name: 'Property Address Line 1' },
       { field: 'city', name: 'City' },
-      { field: 'state', name: 'State' },
+      { field: 'states', name: 'States' },
       { field: 'county', name: 'County' }
     ];
 
-    const missingFields = requiredFields.filter(({ field }) => !formData[field as keyof typeof formData]);
+    const missingFields = requiredFields.filter(({ field }) => {
+      const value = formData[field as keyof typeof formData];
+      if (field === 'states') {
+        return !Array.isArray(value) || value.length === 0;
+      }
+      return !value;
+    });
     
     if (missingFields.length > 0) {
       toast({
@@ -143,14 +150,13 @@ const OrderEntry: React.FC = () => {
         property_address_line2: formData.propertyAddressLine2,
         city: formData.city,
         county: formData.county,
-        state: formData.state,
+        states: formData.states,
         zip_code: formData.zipCode,
         online_ground: formData.onlineGround,
         rush_file: formData.rushFile,
         comments: formData.comments
       };
 
-      console.log('Submitting order data:', orderData);
 
       const response = await fetch('http://localhost:5001/orders', {
         method: 'POST',
@@ -232,26 +238,10 @@ const OrderEntry: React.FC = () => {
         }
       `}</style>
       
-      {/* Header with toggle and clear */}
+      {/* Header with clear */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl font-semibold text-gray-800">Order Entry</h1>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Order Entry</span>
-            <div className="relative inline-block w-12 h-6 mr-2 align-middle select-none">
-              <input 
-                type="checkbox" 
-                name="toggle" 
-                id="toggle" 
-                className="absolute right-0 w-6 h-6 rounded-full bg-white border-2 border-gray-300 appearance-none cursor-pointer transition-all duration-300 checked:right-6 checked:border-blue-500" 
-                defaultChecked
-              />
-              <label 
-                htmlFor="toggle" 
-                className="block overflow-hidden h-6 rounded-full bg-blue-500 cursor-pointer"
-              ></label>
-            </div>
-          </div>
         </div>
         <button 
           type="button" 
@@ -274,7 +264,7 @@ const OrderEntry: React.FC = () => {
         >
           <span>Clear All</span>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
       </div>
@@ -312,7 +302,7 @@ const OrderEntry: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Order Type</option>
-                {ORDER_TYPES.map(type => (
+                {ORDER_TYPES.sort().map(type => (
                   <option key={type} value={type}>
                     {type}
                   </option>
@@ -336,7 +326,7 @@ const OrderEntry: React.FC = () => {
                 <option value="">
                   {clientsLoading ? 'Loading...' : 'Clients'}
                 </option>
-                {clients.map(client => (
+                {clients.sort((a, b) => a.name.localeCompare(b.name)).map(client => (
                   <option key={client.id} value={client.id}>
                     {client.name}
                   </option>
@@ -397,18 +387,17 @@ const OrderEntry: React.FC = () => {
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
                 </svg>
-                State *
+                Select States *
               </label>
-              <select
-                value={formData.state}
-                onChange={(e) => handleInputChange('state', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">State</option>
-                {states.map(state => (
-                  <option key={state} value={state}>{state}</option>
-                ))}
-              </select>
+              <MultiSelect
+                options={stateOptions}
+                selected={formData.states}
+                onChange={(selected) => setFormData(prev => ({ ...prev, states: selected }))}
+                placeholder="Select states..."
+                showAbbreviation={true}
+                maxDisplay={3}
+                className="w-full"
+              />
             </div>
 
             <div>
@@ -519,13 +508,6 @@ const OrderEntry: React.FC = () => {
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               )}
               <span>{isSubmitting ? 'Creating...' : 'Submit Order Entry'}</span>
-            </button>
-            <button
-              type="button"
-              disabled={isSubmitting}
-              className="flex-1 px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors"
-            >
-              Modify Order Entry
             </button>
           </div>
         </form>

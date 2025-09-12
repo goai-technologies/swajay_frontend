@@ -1,17 +1,9 @@
 
 import React from 'react';
-import AppLayout from '@/components/AppLayout';
-import { AppProvider } from '@/contexts/AppContext';
-import { Authprovider } from '@/contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 const Index: React.FC = () => {
-  return (
-    <Authprovider>
-      <AppProvider>
-        <AppLayout />
-      </AppProvider>
-    </Authprovider>
-  );
+  return <Navigate to="/dashboard" replace />;
 };
 
 export default Index;

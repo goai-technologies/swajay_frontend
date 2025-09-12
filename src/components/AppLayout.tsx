@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -14,8 +15,24 @@ import Profile from './Profile';
 
 const AppLayout: React.FC = () => {
   const { sidebarOpen, toggleSidebar, currentView, setCurrentView } = useAppContext();
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout, isLoading, setResetViewCallback } = useAuth();
   const isMobile = useIsMobile();
+  const { view } = useParams<{ view: string }>();
+  const location = useLocation();
+
+  // Register reset callback to reset view to dashboard on logout
+  React.useEffect(() => {
+    setResetViewCallback(() => () => setCurrentView('dashboard'));
+  }, [setResetViewCallback, setCurrentView]);
+
+  // Handle URL-based view changes
+  React.useEffect(() => {
+    if (view) {
+      setCurrentView(view);
+    } else if (location.pathname === '/dashboard') {
+      setCurrentView('dashboard');
+    }
+  }, [view, location.pathname, setCurrentView]);
 
 
 
@@ -40,24 +57,42 @@ const AppLayout: React.FC = () => {
   const renderCurrentView = () => {
     if (!user) return null;
 
-    switch (currentView) {
-      case 'dashboard':
-        return <Dashboard userRole={user.role} />;
-      case 'workarea':
-        return <WorkArea />;
-      case 'queue':
-        return <MyQueue />;
-      case 'orders':
-        return <OrderEntry />;
-      case 'users':
-        return <UserManagement />;
-      case 'clients':
-        return <ClientManagement />;
-      case 'profile':
-        return <Profile />;
-      default:
-        // Default view should be dashboard for all users now
-        return <Dashboard userRole={user.role} />;
+    try {
+      switch (currentView) {
+        case 'dashboard':
+          return <Dashboard userRole={user.role} />;
+        case 'workarea':
+          return <WorkArea />;
+        case 'queue':
+          return <MyQueue />;
+        case 'orders':
+          return <OrderEntry />;
+        case 'users':
+          return <UserManagement />;
+        case 'clients':
+          return <ClientManagement />;
+        case 'profile':
+          return <Profile />;
+        default:
+          // Default view should be dashboard for all users now
+          return <Dashboard userRole={user.role} />;
+      }
+    } catch (error) {
+      console.error('Error rendering current view:', error);
+      return (
+        <div className="p-6 bg-gray-100 h-full overflow-y-auto">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading View</h2>
+            <p className="text-gray-600 mb-4">There was an error loading the {currentView} view.</p>
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      );
     }
   };
 
@@ -79,7 +114,17 @@ const AppLayout: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main className={`flex-1 bg-gray-100 transition-all duration-300 ease-in-out ${sidebarOpen && !isMobile ? 'ml-64' : ''}`}>
+      <main className={`flex-1 bg-gray-100 transition-all duration-300 ease-in-out ${sidebarOpen && !isMobile ? 'ml-64' : ''} overflow-hidden`}>
+        {/* Welcome Message - Top Right */}
+        <div className="bg-white border-b border-gray-200 px-6 py-3">
+          <div className="flex justify-end">
+            <div className="text-sm text-gray-600">
+              <span className="text-gray-500">Welcome, </span>
+              <span className="font-medium">{user?.username}</span>
+              <span className="text-gray-500 ml-2">({user?.role})</span>
+            </div>
+          </div>
+        </div>
         {renderCurrentView()}
       </main>
     </div>
