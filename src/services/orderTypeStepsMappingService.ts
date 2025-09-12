@@ -51,6 +51,19 @@ export const updateOrderTypeStepMapping = async (
   return response.data;
 };
 
+// Update only the sequence number for a mapping (used for drag-and-drop reordering)
+export const updateOrderTypeStepSequence = async (
+  order_type_step_mapping_id: string,
+  sequence_number: number
+) => {
+  const response = await axios.put(
+    `${BASE_URL}/order_types/steps_mapping/${order_type_step_mapping_id}`,
+    { sequence_number },
+    { headers: getAuthHeaders() }
+  );
+  return response.data;
+};
+
 export const deleteOrderTypeStepMapping = async (order_type_step_mapping_id: string) => {
   const response = await axios.delete(
     `${BASE_URL}/order_types/steps_mapping/${order_type_step_mapping_id}`,

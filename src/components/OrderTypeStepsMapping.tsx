@@ -21,6 +21,7 @@ import {
   createOrderTypeStepMappings,
   updateOrderTypeStepMapping,
   deleteOrderTypeStepMapping,
+  updateOrderTypeStepSequence,
   StepMapping
 } from '@/services/orderTypeStepsMappingService';
 import { getAllStepLibraryItems } from '@/services/stepsLibraryService';
@@ -93,6 +94,8 @@ const OrderTypeStepsMapping: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [draggingMappingId, setDraggingMappingId] = useState<string | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
   const { token } = useAuth();
   const navigate = useNavigate();
 
@@ -370,6 +373,74 @@ const OrderTypeStepsMapping: React.FC = () => {
     return maxSequence + 1;
   };
 
+  const getSortedMappings = () => {
+    return stepMappingsWithDetails
+      .filter(mapping => mapping && mapping.id)
+      .sort((a, b) => (a.sequence_number || 0) - (b.sequence_number || 0));
+  };
+
+  const handleDragStart = (mappingId: string) => {
+    setDraggingMappingId(mappingId);
+  };
+
+  const handleDragOverRow = (e: React.DragEvent<HTMLTableRowElement>) => {
+    e.preventDefault();
+  };
+
+  const reorderLocally = (fromIndex: number, toIndex: number) => {
+    const sorted = getSortedMappings();
+    const updated = [...sorted];
+    const [removed] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, removed);
+    // Reassign sequence numbers locally for immediate feedback
+    const reassigned = updated.map((m, idx) => ({ ...m, sequence_number: idx + 1 }));
+    setStepMappingsWithDetails(reassigned);
+  };
+
+  const handleDropOnRow = async (
+    e: React.DragEvent<HTMLTableRowElement>,
+    targetMappingId: string
+  ) => {
+    e.preventDefault();
+    if (!draggingMappingId || draggingMappingId === targetMappingId) return;
+
+    const sorted = getSortedMappings();
+    const fromIndex = sorted.findIndex(m => m.id === draggingMappingId);
+    const toIndex = sorted.findIndex(m => m.id === targetMappingId);
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    // Compute new index for drop: place dragged item before the target row
+    const newIndex = toIndex;
+
+    // Optimistic local reorder
+    reorderLocally(fromIndex, newIndex);
+
+    // Call API for moved item only with new sequence number
+    const moved = sorted[fromIndex];
+    const newSequence = newIndex + 1;
+
+    try {
+      setIsReordering(true);
+      const response = await updateOrderTypeStepSequence(moved.id, newSequence);
+      if (!response?.success) {
+        throw new Error(response?.message || 'Failed to reorder step');
+      }
+      // Refresh from server to reflect backend normalization
+      fetchStepMappings();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to update sequence',
+        variant: 'destructive'
+      });
+      // Revert by refetching
+      fetchStepMappings();
+    } finally {
+      setIsReordering(false);
+      setDraggingMappingId(null);
+    }
+  };
+
   useEffect(() => {
     if (token && order_type_id) {
       fetchAvailableSteps();
@@ -549,22 +620,29 @@ const OrderTypeStepsMapping: React.FC = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              stepMappingsWithDetails
-                .filter(mapping => mapping && mapping.id) // Filter out any undefined/null mappings
-                .sort((a, b) => (a.sequence_number || 0) - (b.sequence_number || 0))
-                .map((mapping, index) => {
+              getSortedMappings().map((mapping, index) => {
                   // Use nested step_detail properties from the enriched mappings
                   const stepName = mapping?.step_detail?.step_name || 'Unknown Step';
                   const stepDescription = mapping?.step_detail?.description || 'No description';
                   const sequenceNumber = mapping?.sequence_number || (index + 1);
                   
                   return (
-                    <TableRow key={mapping.id}>
+                    <TableRow
+                      key={mapping.id}
+                      draggable
+                      onDragStart={() => handleDragStart(mapping.id)}
+                      onDragOver={handleDragOverRow}
+                      onDrop={(e) => handleDropOnRow(e, mapping.id)}
+                      className={`${draggingMappingId === mapping.id ? 'opacity-70' : ''}`}
+                    >
                       <TableCell className="font-medium">
                         <div className="flex items-center space-x-2">
                           <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
                             {sequenceNumber}
                           </span>
+                          {isReordering && draggingMappingId === mapping.id && (
+                            <span className="text-xs text-gray-500">Updating…</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">{stepName}</TableCell>

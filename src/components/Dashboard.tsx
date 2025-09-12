@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+// Removed View Log button; rows are now clickable to open details
 import OrderLogDialog from './OrderLogDialog';
 import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 
@@ -281,13 +280,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                {/* Actions column removed; click row to view details */}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {orders.length > 0 ? (
                 orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
+                  <tr
+                    key={order.id}
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleViewLog(order.id)}
+                  >
                     <td className="px-6 py-4 text-sm font-medium text-slate-800">
                       {order.file_number || 'N/A'}
                     </td>
@@ -308,22 +311,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{formatDate(order.created_at)}</td>
-                    <td className="px-6 py-4">
-                      <Button
-                        onClick={() => handleViewLog(order.id)}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center space-x-1"
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span>View Log</span>
-                      </Button>
-                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                     No orders found
                   </td>
                 </tr>

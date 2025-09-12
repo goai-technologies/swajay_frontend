@@ -11,6 +11,7 @@ import { MultiSelect } from '@/components/ui/multi-select';
 import { toast } from '@/components/ui/use-toast';
 import { ORDER_TYPES } from '@/constants/orderTypes';
 import { US_STATES } from '@/constants/states';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { 
   Edit, 
   Trash2, 
@@ -33,13 +34,6 @@ const CAPABILITIES = [
   'Search QC', 
   'Final QC', 
   'Commitment Review QC'
-];
-const CLIENT_NAMES = [
-  'Radian Title',
-  'Holler Law Firm', 
-  'ETT',
-  'VTR',
-  'FlexC'
 ];
 // Convert US_STATES to MultiSelectOption format
 const stateOptions = US_STATES.map(state => ({
@@ -125,7 +119,7 @@ const UserManagement: React.FC = () => {
   const [clients, setClients] = useState<{id: string, name: string}[]>([]);
   const { token } = useAuth();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     if (!token) return;
     
     try {
@@ -159,9 +153,29 @@ const UserManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
-  const handleCreateUser = async () => {
+  const resetForm = useCallback(() => {
+    setFormData({
+      username: '',
+      name: '',
+      email: '',
+      password: '',
+      phone_number: '',
+      company: '',
+      address: '',
+      employee_type: '',
+      user_type: '',
+      capabilities: [],
+      select_states: [],
+      clients: [],
+      skip_qc: 'No',
+      order_types: []
+    });
+    setSelectedUser(null);
+  }, []);
+
+  const handleCreateUser = useCallback(async () => {
     if (!token || isSubmitting) return;
     
     setIsSubmitting(true);
@@ -220,9 +234,9 @@ const UserManagement: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [token, isSubmitting, formData, fetchUsers, resetForm]);
 
-  const handleUpdateUser = async () => {
+  const handleUpdateUser = useCallback(async () => {
     if (!selectedUser || !token) return;
 
     try {
@@ -230,7 +244,6 @@ const UserManagement: React.FC = () => {
         username: formData.username,
         name: formData.name,
         email: formData.email, 
-        role: formData.role,
         phone_number: formData.phone_number,
         company: formData.company,
         address: formData.address,
@@ -240,8 +253,7 @@ const UserManagement: React.FC = () => {
         select_states: formData.select_states.join(','),
         clients: formData.clients.join(','),
         skip_qc: formData.skip_qc,
-        order_types: formData.order_types.join(','),
-        skills: formData.skills.join(',')
+        order_types: formData.order_types.join(',')
       };
 
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.USER_BY_ID(selectedUser.id)}`, {
@@ -280,7 +292,7 @@ const UserManagement: React.FC = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [selectedUser, token, formData, fetchUsers, resetForm]);
 
   const handleDeleteUser = async (userId: string) => {
     if (!token) return;
@@ -318,26 +330,6 @@ const UserManagement: React.FC = () => {
         variant: "destructive"
       });
     }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      username: '',
-      name: '',
-      email: '',
-      password: '',
-      phone_number: '',
-      company: '',
-      address: '',
-      employee_type: '',
-      user_type: '',
-      capabilities: [],
-      select_states: [],
-      clients: [],
-      skip_qc: 'No',
-      order_types: []
-    });
-    setSelectedUser(null);
   };
 
   const openUserDialog = (user?: User) => {
@@ -400,22 +392,42 @@ const UserManagement: React.FC = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Additional check to ensure we don't have any undefined values causing issues
-    if (!formData.username || !formData.email || (!selectedUser && !formData.password)) {
+    try {
+      // Additional check to ensure we don't have any undefined values causing issues
+      if (!formData.username || !formData.email || (!selectedUser && !formData.password)) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      selectedUser ? handleUpdateUser() : handleCreateUser();
+    } catch (error) {
+      console.error('Form submission error:', error);
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
+        title: "Error",
+        description: "An error occurred while submitting the form",
         variant: "destructive"
       });
-      return;
     }
-    
-    selectedUser ? handleUpdateUser() : handleCreateUser();
-  }, [formData, selectedUser, handleUpdateUser, handleCreateUser]);
+  }, [selectedUser, handleUpdateUser, handleCreateUser]);
 
   const UserDialog = () => (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent 
+        className="max-w-6xl max-h-[90vh] overflow-y-auto"
+        aria-describedby="user-dialog-description"
+      >
+        <DialogHeader>
+          <DialogTitle>
+            {selectedUser ? 'Edit User' : 'Add User'}
+          </DialogTitle>
+        </DialogHeader>
+        <div id="user-dialog-description" className="sr-only">
+          {selectedUser ? 'Edit user information and settings' : 'Create a new user account with role and permissions'}
+        </div>
         <div className="p-6 bg-gray-50">
           {/* Header with clear */}
           <div className="flex items-center justify-between mb-6">
@@ -437,7 +449,13 @@ const UserManagement: React.FC = () => {
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-8">
-            <form onSubmit={handleFormSubmit} className="space-y-6">
+            <form 
+              onSubmit={handleFormSubmit} 
+              className="space-y-6" 
+              autoComplete="off" 
+              data-lpignore="true"
+              data-form-type="other"
+            >
               {/* First Row: Username, Name, Email, Password */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
@@ -452,6 +470,11 @@ const UserManagement: React.FC = () => {
                     onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="supervisor_mike"
+                    autoComplete="username"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    data-1p-ignore="true"
+                    data-bwignore="true"
                   />
                 </div>
 
@@ -483,6 +506,8 @@ const UserManagement: React.FC = () => {
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoComplete="email"
+                    data-lpignore="true"
                   />
                 </div>
 
@@ -500,6 +525,11 @@ const UserManagement: React.FC = () => {
                       onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="supervisor123"
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
                     />
                   </div>
                 )}
@@ -606,19 +636,13 @@ const UserManagement: React.FC = () => {
                     </svg>
                     Capabilities
                   </label>
-                  <Select
-                    value={formData.capabilities.join(',')}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, capabilities: value ? [value] : [] }))}
-                  >
-                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <SelectValue placeholder="Select Capabilities" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CAPABILITIES.map(capability => (
-                        <SelectItem key={capability} value={capability}>{capability}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <MultiSelect
+                    options={CAPABILITIES.map(capability => ({ value: capability, label: capability }))}
+                    selected={formData.capabilities}
+                    onChange={(selected) => setFormData(prev => ({ ...prev, capabilities: selected }))}
+                    placeholder="Select Capabilities"
+                    className="w-full"
+                  />
                 </div>
 
                 <div>
@@ -642,23 +666,17 @@ const UserManagement: React.FC = () => {
                 <div>
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 616 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
                     </svg>
                     Clients
                   </label>
-                  <Select
-                    value={formData.clients.join(',')}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, clients: value ? [value] : [] }))}
-                  >
-                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <SelectValue placeholder="Select Clients" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CLIENT_NAMES.map(client => (
-                        <SelectItem key={client} value={client}>{client}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <MultiSelect
+                    options={clients.map(client => ({ value: client.id, label: client.name }))}
+                    selected={formData.clients}
+                    onChange={(selected) => setFormData(prev => ({ ...prev, clients: selected }))}
+                    placeholder="Select Clients"
+                    className="w-full"
+                  />
                 </div>
               </div>
 
@@ -692,19 +710,13 @@ const UserManagement: React.FC = () => {
                     </svg>
                     Order Types
                   </label>
-                  <Select
-                    value={formData.order_types.join(',')}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, order_types: value ? [value] : [] }))}
-                  >
-                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <SelectValue placeholder="Select Order Types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ORDER_TYPES.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <MultiSelect
+                    options={ORDER_TYPES.map(type => ({ value: type, label: type }))}
+                    selected={formData.order_types}
+                    onChange={(selected) => setFormData(prev => ({ ...prev, order_types: selected }))}
+                    placeholder="Select Order Types"
+                    className="w-full"
+                  />
                 </div>
 
                 {/* removed Skills and Role fields as requested */}
@@ -736,86 +748,88 @@ const UserManagement: React.FC = () => {
   );
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">User Management</h1>
-          <p className="text-gray-600 mt-1">Manage system users and their roles</p>
+    <ErrorBoundary>
+      <div className="p-6 bg-gray-100 min-h-screen">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-800">User Management</h1>
+            <p className="text-gray-600 mt-1">Manage system users and their roles</p>
+          </div>
+          <Button onClick={() => openUserDialog()}>
+            <UserPlus className="mr-2 h-4 w-4" /> Add User
+          </Button>
         </div>
-        <Button onClick={() => openUserDialog()}>
-          <UserPlus className="mr-2 h-4 w-4" /> Add User
-        </Button>
-      </div>
 
-      <div className="bg-white rounded-lg shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Username</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+        <div className="bg-white rounded-lg shadow-sm">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span>Loading users...</span>
-                  </div>
-                </TableCell>
+                <TableHead>Username</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ) : users.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                  No users found. Click "Add New User" to create your first user.
-                </TableCell>
-              </TableRow>
-            ) : (
-              users.map(user => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.username}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{user.role}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={user.active ? 'default' : 'destructive'}
-                    >
-                      {user.active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => openUserDialog(user)}
-                      >
-                        <Edit className="h-4 w-4 mr-2" /> Edit
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" /> Delete
-                      </Button>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span>Loading users...</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                    No users found. Click "Add New User" to create your first user.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                users.map(user => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.username}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{user.role}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={user.active ? 'default' : 'destructive'}
+                      >
+                        {user.active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openUserDialog(user)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" /> Edit
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteUser(user.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        
+        <UserDialog />
       </div>
-      
-      <UserDialog />
-    </div>
+    </ErrorBoundary>
   );
 };
 

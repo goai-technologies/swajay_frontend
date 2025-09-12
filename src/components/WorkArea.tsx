@@ -15,7 +15,8 @@ import {
   User, 
   MapPin,
   Calendar,
-  RefreshCw
+  RefreshCw,
+  FolderOpen
 } from 'lucide-react';
 import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 
@@ -40,6 +41,7 @@ interface WorkItem {
   property_address: string;
   county: string;
   state: string;
+  folder_link?: string;
 }
 
 interface UserDashboardData {
@@ -459,15 +461,27 @@ const WorkArea: React.FC = () => {
                         <span className="font-medium"> County:</span> {item.county}, {item.state}
                       </div>
                       
-                      {item.step_status === 'In Progress' && (
-                        <Button 
-                          size="sm"
-                          onClick={() => openCompletionDialog(item.step_id)}
-                        >
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Complete
-                        </Button>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {item.folder_link && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(item.folder_link as string, '_blank', 'noopener,noreferrer')}
+                          >
+                            <FolderOpen className="mr-2 h-4 w-4" />
+                            Open Folder
+                          </Button>
+                        )}
+                        {item.step_status === 'In Progress' && (
+                          <Button 
+                            size="sm"
+                            onClick={() => openCompletionDialog(item.step_id)}
+                          >
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Complete
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

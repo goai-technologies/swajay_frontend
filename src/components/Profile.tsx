@@ -7,7 +7,7 @@ import { User, Mail, Shield, Calendar, Building } from 'lucide-react';
 const Profile: React.FC = () => {
   const { user } = useAuth();
 
-  if (!user) {
+  if (!user || !user.id || !user.username || !user.role) {
     return (
       <div className="p-6 bg-gray-100 min-h-screen flex items-center justify-center">
         <div className="text-center">

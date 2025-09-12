@@ -43,6 +43,7 @@ const OrderEntry: React.FC = () => {
     ownerName: '',
     onlineGround: 'Online',
     rushFile: 'No',
+    folderLink: '',
     comments: ''
   });
 
@@ -155,6 +156,7 @@ const OrderEntry: React.FC = () => {
         zip_code: formData.zipCode,
         online_ground: formData.onlineGround,
         rush_file: formData.rushFile,
+        folder_link: formData.folderLink,
         comments: formData.comments
       };
 
@@ -189,12 +191,13 @@ const OrderEntry: React.FC = () => {
           propertyAddressLine1: '',
           propertyAddressLine2: '',
           city: '',
-          states: [], // Changed from 'state: ''
+          states: [],
           zipCode: '',
           county: '',
           ownerName: '',
           onlineGround: 'Online',
           rushFile: 'No',
+          folderLink: '',
           comments: ''
         });
 
@@ -245,12 +248,13 @@ const OrderEntry: React.FC = () => {
             propertyAddressLine1: '',
             propertyAddressLine2: '',
             city: '',
-            states: [], // Changed from 'state: ''
+            states: [],
             zipCode: '',
             county: '',
             ownerName: '',
             onlineGround: 'Online',
             rushFile: 'No',
+            folderLink: '',
             comments: ''
           })}
         >
@@ -473,6 +477,20 @@ const OrderEntry: React.FC = () => {
                 <option value="Yes">Yes</option>
               </select>
             </div>
+          </div>
+
+          {/* Folder Link */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Folder Link
+            </label>
+            <input
+              type="url"
+              value={formData.folderLink}
+              onChange={(e) => handleInputChange('folderLink', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://..."
+            />
           </div>
 
           {/* Comments Section */}

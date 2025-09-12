@@ -20,26 +20,47 @@ interface AuthContextType {
 
 // Create an axios instance with interceptors
 const createAxiosInstance = (token: string | null, logoutCallback?: () => void) => {
-  const instance = axios.create({
-    baseURL: API_CONFIG.BASE_URL,
-    headers: token ? { Authorization: `Bearer ${token}` } : {}
-  });
-
-  // Add a response interceptor
-  instance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      // If the error status is 401 (Unauthorized), trigger logout
-      if (error.response && error.response.status === 401) {
-        if (logoutCallback) {
-          logoutCallback();
-        }
-      }
-      return Promise.reject(error);
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
-  );
 
-  return instance;
+    const instance = axios.create({
+      baseURL: API_CONFIG.BASE_URL,
+      timeout: API_CONFIG.TIMEOUT,
+      headers
+    });
+
+    // Add a response interceptor
+    instance.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        // If the error status is 401 (Unauthorized), trigger logout
+        if (error.response && error.response.status === 401) {
+          if (logoutCallback) {
+            logoutCallback();
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return instance;
+  } catch (error) {
+    console.error('Error creating axios instance:', error);
+    // Return a basic axios instance as fallback
+    return axios.create({
+      baseURL: API_CONFIG.BASE_URL,
+      timeout: API_CONFIG.TIMEOUT,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  }
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,7 +68,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [axiosInstance, setAxiosInstance] = useState(() => createAxiosInstance(null));
+  const [axiosInstance, setAxiosInstance] = useState(() => {
+    try {
+      return createAxiosInstance(null);
+    } catch (error) {
+      console.error('Error creating initial axios instance:', error);
+      return axios.create({
+        baseURL: API_CONFIG.BASE_URL,
+        timeout: API_CONFIG.TIMEOUT,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [resetViewCallback, setResetViewCallback] = useState<(() => void) | null>(null);
 
@@ -58,7 +90,16 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('user');
     
     // Reset axios instance
-    setAxiosInstance(createAxiosInstance(null));
+    try {
+      setAxiosInstance(createAxiosInstance(null));
+    } catch (error) {
+      console.error('Error resetting axios instance:', error);
+      setAxiosInstance(axios.create({
+        baseURL: API_CONFIG.BASE_URL,
+        timeout: API_CONFIG.TIMEOUT,
+        headers: { 'Content-Type': 'application/json' }
+      }));
+    }
     
     // Reset view to dashboard
     if (resetViewCallback) {
@@ -72,6 +113,11 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await axios.post(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.LOGIN}`, {
         username,
         password
+      }, {
+        timeout: API_CONFIG.TIMEOUT,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
       // Check the response data for success
@@ -88,8 +134,20 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(userData);
         
         // Create a new axios instance with the token
-        const newAxiosInstance = createAxiosInstance(authToken, logout);
-        setAxiosInstance(newAxiosInstance);
+        try {
+          const newAxiosInstance = createAxiosInstance(authToken, logout);
+          setAxiosInstance(newAxiosInstance);
+        } catch (error) {
+          console.error('Error creating axios instance with token:', error);
+          setAxiosInstance(axios.create({
+            baseURL: API_CONFIG.BASE_URL,
+            timeout: API_CONFIG.TIMEOUT,
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            }
+          }));
+        }
         
         setIsLoading(false);
         return true;
@@ -121,8 +179,20 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(parsedUser);
           
           // Create axios instance with stored token
-          const newAxiosInstance = createAxiosInstance(storedToken, logout);
-          setAxiosInstance(newAxiosInstance);
+          try {
+            const newAxiosInstance = createAxiosInstance(storedToken, logout);
+            setAxiosInstance(newAxiosInstance);
+          } catch (error) {
+            console.error('Error creating axios instance with stored token:', error);
+            setAxiosInstance(axios.create({
+              baseURL: API_CONFIG.BASE_URL,
+              timeout: API_CONFIG.TIMEOUT,
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${storedToken}`
+              }
+            }));
+          }
         } else {
           console.error('Invalid user data structure:', parsedUser);
           // Clear invalid data
