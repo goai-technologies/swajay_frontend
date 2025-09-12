@@ -17,6 +17,7 @@ import {
   Mail,
   Building
 } from 'lucide-react';
+import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 
 interface OrderLogData {
   order_id: string;
@@ -115,7 +116,7 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:5001/orders/${orderId}/log`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.ORDER_LOG(orderId)}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

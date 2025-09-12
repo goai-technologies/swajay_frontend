@@ -17,6 +17,7 @@ import {
   Calendar,
   RefreshCw
 } from 'lucide-react';
+import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 
 // TypeScript Interfaces
 interface WorkItemSummary {
@@ -95,7 +96,7 @@ const WorkArea: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:5001/dashboard/user/${user.id}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.USER_DASHBOARD(user.id)}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -132,7 +133,7 @@ const WorkArea: React.FC = () => {
 
     try {
       setIsRequestingWork(true);
-      const response = await fetch(`http://localhost:5001/dashboard/user/${user.id}/request-work`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.REQUEST_WORK(user.id)}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -190,7 +191,7 @@ const WorkArea: React.FC = () => {
         comments: completionComments
       };
 
-      const response = await fetch(`http://localhost:5001/dashboard/step/${stepId}/complete`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.COMPLETE_STEP(stepId)}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

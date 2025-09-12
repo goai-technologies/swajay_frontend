@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiUrls, createFetchRequest } from '@/utils/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from '@/components/ui/use-toast';
+import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 
 interface Client {
   id: string;
@@ -25,11 +25,12 @@ const ClientManagement: React.FC = () => {
   const fetchClients = async () => {
     try {
       setIsLoading(true);
-      const response = await createFetchRequest(
-        apiUrls.clients({ page: 1, page_size: 50 }),
-        token,
-        { method: 'GET' }
-      );
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.CLIENTS}?page=1&page_size=50`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -57,7 +58,7 @@ const ClientManagement: React.FC = () => {
 
   const handleCreateClient = async (clientData: Partial<Client>) => {
     try {
-      const response = await fetch('http://localhost:5001/clients', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.CLIENTS}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -101,7 +102,7 @@ const ClientManagement: React.FC = () => {
     if (!selectedClient) return;
 
     try {
-      const response = await fetch(`http://localhost:5001/clients/${selectedClient.id}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.CLIENT_BY_ID(selectedClient.id)}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

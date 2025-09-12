@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { useAppContext } from '@/contexts/AppContext';
 import { MultiSelect } from '@/components/ui/multi-select';
+import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 
 interface Client {
   id: string;
@@ -70,7 +71,7 @@ const OrderEntry: React.FC = () => {
       setClientsLoading(true);
       setClientsError(null);
 
-      const response = await fetch('http://localhost:5001/clients?page=1&page_size=50', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.CLIENTS}?page=1&page_size=50`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -158,7 +159,7 @@ const OrderEntry: React.FC = () => {
       };
 
 
-      const response = await fetch('http://localhost:5001/orders', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.ORDERS}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,7 +189,7 @@ const OrderEntry: React.FC = () => {
           propertyAddressLine1: '',
           propertyAddressLine2: '',
           city: '',
-          state: '',
+          states: [], // Changed from 'state: ''
           zipCode: '',
           county: '',
           ownerName: '',
@@ -228,15 +229,6 @@ const OrderEntry: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <style jsx>{`
-        .toggle-checkbox:checked {
-          right: 0;
-          border-color: #3b82f6;
-        }
-        .toggle-checkbox:checked + .toggle-label {
-          background-color: #3b82f6;
-        }
-      `}</style>
       
       {/* Header with clear */}
       <div className="flex items-center justify-between mb-6">
@@ -253,7 +245,7 @@ const OrderEntry: React.FC = () => {
             propertyAddressLine1: '',
             propertyAddressLine2: '',
             city: '',
-            state: '',
+            states: [], // Changed from 'state: ''
             zipCode: '',
             county: '',
             ownerName: '',
@@ -302,7 +294,7 @@ const OrderEntry: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Order Type</option>
-                {ORDER_TYPES.sort().map(type => (
+                {[...ORDER_TYPES].sort().map(type => (
                   <option key={type} value={type}>
                     {type}
                   </option>
