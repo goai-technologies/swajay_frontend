@@ -47,13 +47,12 @@ interface User {
   username: string;
   name?: string;
   email: string;
-  role: 'Admin' | 'Supervisor' | 'Processor' | 'QC' | 'Typist' | 'Auditor';
+  user_type: 'Admin' | 'Supervisor' | 'Processor' | 'QC' | 'Typist' | 'Auditor';
   active: boolean;
   phone_number?: string;
   company?: string;
   address?: string;
   employee_type?: string;
-  user_type?: string;
   capabilities?: string;
   select_states?: string;
   clients?: string;
@@ -412,144 +411,156 @@ const UserManagement: React.FC = () => {
         variant: "destructive"
       });
     }
-  }, [selectedUser, handleUpdateUser, handleCreateUser]);
+  }, [selectedUser, handleUpdateUser, handleCreateUser, formData]);
 
-  const UserDialog = () => (
+  // Memoize the form handlers to prevent unnecessary re-renders
+  const handleInputChange = useCallback((field: keyof UserFormData, value: string | string[]) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleCloseDialog = useCallback(() => {
+    setIsDialogOpen(false);
+    resetForm();
+  }, [resetForm]);
+
+  const UserDialog = useMemo(() => (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogContent 
-        className="max-w-6xl max-h-[90vh] overflow-y-auto"
-        aria-describedby="user-dialog-description"
-      >
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-gray-900">
             {selectedUser ? 'Edit User' : 'Add User'}
           </DialogTitle>
         </DialogHeader>
-        <div id="user-dialog-description" className="sr-only">
-          {selectedUser ? 'Edit user information and settings' : 'Create a new user account with role and permissions'}
-        </div>
-        <div className="p-6 bg-gray-50">
-          {/* Header with clear */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-semibold text-gray-800">
-                {selectedUser ? 'Edit User' : 'Add User'}
-              </h1>
-            </div>
-            <button 
-              type="button" 
-              className="flex items-center space-x-2 text-blue-600 hover:text-blue-800"
-              onClick={resetForm}
-            >
-              <span>Clear All</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <form 
-              onSubmit={handleFormSubmit} 
-              className="space-y-6" 
-              autoComplete="off" 
-              data-lpignore="true"
-              data-form-type="other"
-            >
-              {/* First Row: Username, Name, Email, Password */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
-                    </svg>
-                    Username
+        
+        <div className="space-y-6">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
+            {/* Basic Information Section */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <UserIcon className="w-5 h-5 mr-2 text-blue-600" />
+                Basic Information
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Username *
                   </label>
                   <Input
                     value={formData.username}
-                    onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="supervisor_mike"
-                    autoComplete="username"
-                    data-lpignore="true"
-                    data-form-type="other"
-                    data-1p-ignore="true"
-                    data-bwignore="true"
+                    onChange={(e) => handleInputChange('username', e.target.value)}
+                    placeholder="Enter username"
+                    required
                   />
                 </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
-                    </svg>
-                    Name
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Full Name *
                   </label>
                   <Input
                     value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Mike Supervisor"
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Enter full name"
+                    required
                   />
                 </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-                    </svg>
-                    Email
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Email Address *
                   </label>
                   <Input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    autoComplete="email"
-                    data-lpignore="true"
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder="Enter email address"
+                    required
                   />
                 </div>
-
+                
                 {!selectedUser && (
-                  <div>
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
-                      </svg>
-                      Password
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Password *
                     </label>
                     <Input
                       type="password"
                       value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="supervisor123"
-                      autoComplete="new-password"
-                      data-lpignore="true"
-                      data-form-type="other"
-                      data-1p-ignore="true"
-                      data-bwignore="true"
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      placeholder="Enter password"
+                      required
                     />
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Second Row: Employee Type, User Type, Phone Number, Company */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd"/>
-                    </svg>
+            {/* Contact Information Section */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                </svg>
+                Contact Information
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Phone Number
+                  </label>
+                  <Input
+                    value={formData.phone_number}
+                    onChange={(e) => handleInputChange('phone_number', e.target.value)}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Company
+                  </label>
+                  <Input
+                    value={formData.company}
+                    onChange={(e) => handleInputChange('company', e.target.value)}
+                    placeholder="Enter company name"
+                  />
+                </div>
+                
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Address
+                  </label>
+                  <Input
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    placeholder="Enter full address"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Role & Permissions Section */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd"/>
+                </svg>
+                Role & Permissions
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
                     Employee Type
                   </label>
                   <Select
                     value={formData.employee_type}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, employee_type: value }))}
+                    onValueChange={(value) => handleInputChange('employee_type', value)}
                   >
-                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <SelectValue placeholder="Select Employee Type" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select employee type" />
                     </SelectTrigger>
                     <SelectContent>
                       {EMPLOYEE_TYPES.map(type => (
@@ -558,20 +569,17 @@ const UserManagement: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd"/>
-                    </svg>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
                     User Type
                   </label>
                   <Select
                     value={formData.user_type}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, user_type: value }))}
+                    onValueChange={(value) => handleInputChange('user_type', value)}
                   >
-                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <SelectValue placeholder="Select User Type" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select user type" />
                     </SelectTrigger>
                     <SelectContent>
                       {USER_TYPES.map(type => (
@@ -580,121 +588,17 @@ const UserManagement: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                    </svg>
-                    Phone Number
-                  </label>
-                  <Input
-                    value={formData.phone_number}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="555-5678-9012"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd"/>
-                    </svg>
-                    Company
-                  </label>
-                  <Input
-                    value={formData.company}
-                    onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Swajay Corp"
-                  />
-                </div>
-              </div>
-
-              {/* Third Row: Address, Capabilities, Select States, Clients */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
-                    </svg>
-                    Address
-                  </label>
-                  <Input
-                    value={formData.address}
-                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="200 Management Lane, Toledo, OH 43604"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"/>
-                    </svg>
-                    Capabilities
-                  </label>
-                  <MultiSelect
-                    options={CAPABILITIES.map(capability => ({ value: capability, label: capability }))}
-                    selected={formData.capabilities}
-                    onChange={(selected) => setFormData(prev => ({ ...prev, capabilities: selected }))}
-                    placeholder="Select Capabilities"
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
-                    </svg>
-                    Select States
-                  </label>
-                  <MultiSelect
-                    options={stateOptions}
-                    selected={formData.select_states}
-                    onChange={(selected) => setFormData(prev => ({ ...prev, select_states: selected }))}
-                    placeholder="Select states..."
-                    showAbbreviation={true}
-                    maxDisplay={3}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
-                    </svg>
-                    Clients
-                  </label>
-                  <MultiSelect
-                    options={clients.map(client => ({ value: client.id, label: client.name }))}
-                    selected={formData.clients}
-                    onChange={(selected) => setFormData(prev => ({ ...prev, clients: selected }))}
-                    placeholder="Select Clients"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Fourth Row: Skip QC, Order Types */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd"/>
-                    </svg>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
                     Skip QC
                   </label>
                   <Select
                     value={formData.skip_qc}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, skip_qc: value }))}
+                    onValueChange={(value) => handleInputChange('skip_qc', value)}
                   >
-                    <SelectTrigger className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <SelectValue placeholder="Skip QC" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select QC option" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="No">No</SelectItem>
@@ -702,50 +606,110 @@ const UserManagement: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+            </div>
 
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd"/>
-                    </svg>
+            {/* Capabilities & Access Section */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"/>
+                </svg>
+                Capabilities & Access
+              </h3>
+              
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Capabilities
+                  </label>
+                  <MultiSelect
+                    options={CAPABILITIES.map(capability => ({ value: capability, label: capability }))}
+                    selected={formData.capabilities}
+                    onChange={(selected) => handleInputChange('capabilities', selected)}
+                    placeholder="Select capabilities"
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    States
+                  </label>
+                  <MultiSelect
+                    options={stateOptions}
+                    selected={formData.select_states}
+                    onChange={(selected) => handleInputChange('select_states', selected)}
+                    placeholder="Select states"
+                    showAbbreviation={true}
+                    maxDisplay={3}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Clients
+                  </label>
+                  <MultiSelect
+                    options={clients.map(client => ({ value: client.id, label: client.name }))}
+                    selected={formData.clients}
+                    onChange={(selected) => handleInputChange('clients', selected)}
+                    placeholder="Select clients"
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
                     Order Types
                   </label>
                   <MultiSelect
                     options={ORDER_TYPES.map(type => ({ value: type, label: type }))}
                     selected={formData.order_types}
-                    onChange={(selected) => setFormData(prev => ({ ...prev, order_types: selected }))}
-                    placeholder="Select Order Types"
+                    onChange={(selected) => handleInputChange('order_types', selected)}
+                    placeholder="Select order types"
                     className="w-full"
                   />
                 </div>
-
-                {/* removed Skills and Role fields as requested */}
               </div>
+            </div>
 
-              {/* Submit Buttons */}
-              <div className="flex space-x-4 pt-6">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors flex items-center justify-center space-x-2"
-                >
-                  {isSubmitting && (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  )}
-                  <span>
-                    {isSubmitting 
-                      ? (selectedUser ? 'Updating...' : 'Creating...') 
-                      : (selectedUser ? 'Edit User' : 'Create User')
-                    }
-                  </span>
-                </Button>
-              </div>
-            </form>
-          </div>
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseDialog}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={resetForm}
+              >
+                Clear All
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isSubmitting && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                )}
+                {isSubmitting 
+                  ? (selectedUser ? 'Updating...' : 'Creating...') 
+                  : (selectedUser ? 'Update User' : 'Create User')
+                }
+              </Button>
+            </div>
+          </form>
         </div>
       </DialogContent>
     </Dialog>
-  );
+  ), [isDialogOpen, selectedUser, formData, isSubmitting, handleFormSubmit, handleInputChange, handleCloseDialog, resetForm, clients, stateOptions]);
 
   return (
     <ErrorBoundary>
@@ -766,7 +730,7 @@ const UserManagement: React.FC = () => {
               <TableRow>
                 <TableHead>Username</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead>User Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -793,7 +757,7 @@ const UserManagement: React.FC = () => {
                     <TableCell>{user.username}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{user.role}</Badge>
+                      <Badge variant="outline">{user.user_type}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge 
@@ -827,7 +791,7 @@ const UserManagement: React.FC = () => {
           </Table>
         </div>
         
-        <UserDialog />
+        {UserDialog}
       </div>
     </ErrorBoundary>
   );

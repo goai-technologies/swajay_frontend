@@ -52,10 +52,10 @@ const Navigation: React.FC<NavigationProps> = ({ isMobile, sidebarOpen, onViewCh
       ];
     }
     else {
+      // For Processor and QC roles, only show base items and profile
       return [
         ...baseItems,
-        { id: 'queue', label: 'My Queue', icon: ClipboardList },
-        { id: 'profile', label: 'Profile', icon: User },
+        { id: 'profile', label: 'Profile', icon: User }
       ];
     }
   };

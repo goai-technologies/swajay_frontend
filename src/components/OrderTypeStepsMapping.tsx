@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { 
-  Edit, 
   Trash2, 
   Plus, 
   ArrowUp,
@@ -649,13 +648,6 @@ const OrderTypeStepsMapping: React.FC = () => {
                       <TableCell className="text-gray-600">{stepDescription}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => openStepMappingDialog(mapping)}
-                          >
-                            <Edit className="h-4 w-4 mr-2" /> Edit
-                          </Button>
                           <Button 
                             variant="destructive" 
                             size="sm"

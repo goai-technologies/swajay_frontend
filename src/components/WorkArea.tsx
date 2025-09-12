@@ -46,7 +46,7 @@ interface WorkItem {
 
 interface UserDashboardData {
   user_id: string;
-  user_role: string;
+  user_type: string;
   username: string;
   summary: WorkItemSummary;
   work_items: WorkItem[];
@@ -462,16 +462,19 @@ const WorkArea: React.FC = () => {
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        {item.folder_link && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => window.open(item.folder_link as string, '_blank', 'noopener,noreferrer')}
-                          >
-                            <FolderOpen className="mr-2 h-4 w-4" />
-                            Open Folder
-                          </Button>
-                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!item.folder_link}
+                          onClick={() => {
+                            if (item.folder_link) {
+                              window.open(item.folder_link as string, '_blank', 'noopener,noreferrer');
+                            }
+                          }}
+                        >
+                          <FolderOpen className="mr-2 h-4 w-4" />
+                          Open Folder
+                        </Button>
                         {item.step_status === 'In Progress' && (
                           <Button 
                             size="sm"

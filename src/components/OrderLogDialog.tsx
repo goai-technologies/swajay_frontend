@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { 
   Clock, 
@@ -15,9 +16,11 @@ import {
   MapPin,
   Phone,
   Mail,
-  Building
+  Building,
+  Edit
 } from 'lucide-react';
 import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
+import EditOrderDialog from './EditOrderDialog';
 
 interface OrderLogData {
   order_id: string;
@@ -54,7 +57,7 @@ interface OrderLogData {
       status: string;
       assigned_to: {
         username: string;
-        role: string;
+        user_type: string;
       };
       started_at: string;
       completed_at: string;
@@ -87,7 +90,7 @@ interface OrderLogData {
     status: string;
     assigned_to: {
       username: string;
-      role: string;
+      user_type: string;
     };
     started_at: string;
   }>;
@@ -103,7 +106,8 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
   const [logData, setLogData] = useState<OrderLogData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuth();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const { token, user } = useAuth();
 
   useEffect(() => {
     if (open && orderId && token) {
@@ -194,15 +198,38 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
     return `${Math.round(hours / 24)} days`;
   };
 
+  const canEditOrder = () => {
+    return user?.user_type === 'Admin' || user?.user_type === 'Supervisor';
+  };
+
+  const handleOrderUpdated = () => {
+    // Refresh the order log data after edit
+    if (open && orderId && token) {
+      fetchOrderLog();
+    }
+  };
+
   if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            Order Log {logData?.order_details?.file_number && `- ${logData.order_details.file_number}`}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-2xl font-bold">
+              Order Log {logData?.order_details?.file_number && `- ${logData.order_details.file_number}`}
+            </DialogTitle>
+            {canEditOrder() && logData && (
+              <Button
+                size="sm"
+                onClick={() => setEditDialogOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <Edit className="h-4 w-4" />
+                <span>Edit Order</span>
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         {loading && (
@@ -357,7 +384,7 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                       <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="font-medium text-gray-600">Assigned to:</span>
-                          <p>{logData.current_state.current_step.assigned_to.username} ({logData.current_state.current_step.assigned_to.role})</p>
+                          <p>{logData.current_state.current_step.assigned_to.username} ({logData.current_state.current_step.assigned_to.user_type})</p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-600">Started:</span>
@@ -428,7 +455,7 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                                   <span className="font-medium">Step:</span> {event.details.step_name}
                                   {event.details.assigned_user && (
                                     <span className="ml-4">
-                                      <span className="font-medium">Assigned to:</span> {event.details.assigned_user.username} ({event.details.assigned_user.role})
+                                      <span className="font-medium">Assigned to:</span> {event.details.assigned_user.username} ({event.details.assigned_user.user_type})
                                     </span>
                                   )}
                                 </div>
@@ -443,7 +470,7 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                               )}
                               {event.details.user && (
                                 <div className="text-sm">
-                                  <span className="font-medium">Updated by:</span> {event.details.user.username} ({event.details.user.role})
+                                  <span className="font-medium">Updated by:</span> {event.details.user.username} ({event.details.user.user_type})
                                 </div>
                               )}
                             </div>
@@ -471,7 +498,7 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                           <div>
                             <h4 className="font-semibold">{step.step_name}</h4>
                             <p className="text-sm text-gray-600">
-                              Assigned to: {step.assigned_to.username} ({step.assigned_to.role})
+                              Assigned to: {step.assigned_to.username} ({step.assigned_to.user_type})
                             </p>
                           </div>
                         </div>
@@ -492,6 +519,17 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
               </Card>
             )}
           </div>
+        )}
+
+        {/* Edit Order Dialog */}
+        {logData && (
+          <EditOrderDialog
+            orderId={orderId}
+            orderData={logData.order_details}
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            onOrderUpdated={handleOrderUpdated}
+          />
         )}
       </DialogContent>
     </Dialog>

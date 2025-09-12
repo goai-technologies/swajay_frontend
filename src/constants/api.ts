@@ -23,6 +23,7 @@ export const API_ENDPOINTS = {
   ORDERS: '/orders',
   ORDER_BY_ID: (id: string) => `/orders/${id}`,
   ORDER_LOG: (id: string) => `/orders/${id}/log`,
+  EDIT_ORDER: (id: string) => `/orders/${id}`,
   
   // Dashboard
   USER_DASHBOARD: (userId: string) => `/dashboard/user/${userId}`,

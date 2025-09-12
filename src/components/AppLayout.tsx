@@ -60,7 +60,7 @@ const AppLayout: React.FC = () => {
     try {
       switch (currentView) {
         case 'dashboard':
-          return <Dashboard userRole={user.role} />;
+          return <Dashboard userRole={user.user_type} />;
         case 'workarea':
           return <WorkArea />;
         case 'queue':
@@ -75,7 +75,7 @@ const AppLayout: React.FC = () => {
           return <Profile />;
         default:
           // Default view should be dashboard for all users now
-          return <Dashboard userRole={user.role} />;
+          return <Dashboard userRole={user.user_type} />;
       }
     } catch (error) {
       console.error('Error rendering current view:', error);
@@ -107,7 +107,7 @@ const AppLayout: React.FC = () => {
         isMobile={isMobile} 
         sidebarOpen={sidebarOpen} 
         onViewChange={handleViewChange}
-        userRole={user.role}
+        userRole={user.user_type}
         username={user.username}
         onLogout={logout}
         currentView={currentView}
@@ -121,7 +121,7 @@ const AppLayout: React.FC = () => {
             <div className="text-sm text-gray-600">
               <span className="text-gray-500">Welcome, </span>
               <span className="font-medium">{user?.username}</span>
-              <span className="text-gray-500 ml-2">({user?.role})</span>
+              <span className="text-gray-500 ml-2">({user?.user_type})</span>
             </div>
           </div>
         </div>

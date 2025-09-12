@@ -5,7 +5,7 @@ import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 interface User {
   id: string;
   username: string;
-  role: 'Admin' | 'Supervisor' | 'Processor' | 'QC' | 'Typist' | 'Auditor';
+  user_type: 'Admin' | 'Supervisor' | 'Processor' | 'QC' | 'Typist' | 'Auditor';
 }
 
 interface AuthContextType {
@@ -13,6 +13,7 @@ interface AuthContextType {
   token: string | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
+  validateToken: () => Promise<boolean>;
   axiosInstance: any;
   isLoading: boolean;
   setResetViewCallback: (callback: () => void) => void;
@@ -80,7 +81,7 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     }
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [resetViewCallback, setResetViewCallback] = useState<(() => void) | null>(null);
 
   const logout = () => {
@@ -104,6 +105,22 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Reset view to dashboard
     if (resetViewCallback) {
       resetViewCallback();
+    }
+  };
+
+  // Function to validate token and logout if invalid
+  const validateToken = async () => {
+    if (!token) return false;
+    
+    try {
+      // Make a simple API call to validate the token
+      const response = await axiosInstance.get('/auth/validate');
+      return response.status === 200;
+    } catch (error) {
+      console.error('Token validation failed:', error);
+      // If token is invalid, logout the user
+      logout();
+      return false;
     }
   };
 
@@ -167,45 +184,57 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Check for existing token on initial load
   useEffect(() => {
-    const storedToken = localStorage.getItem('authToken');
-    const storedUser = localStorage.getItem('user');
-    
-    if (storedToken && storedUser) {
+    const checkStoredAuth = async () => {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        // Validate user object has required properties
-        if (parsedUser && parsedUser.id && parsedUser.username && parsedUser.role) {
-          setToken(storedToken);
-          setUser(parsedUser);
-          
-          // Create axios instance with stored token
+        const storedToken = localStorage.getItem('authToken');
+        const storedUser = localStorage.getItem('user');
+        
+        if (storedToken && storedUser) {
           try {
-            const newAxiosInstance = createAxiosInstance(storedToken, logout);
-            setAxiosInstance(newAxiosInstance);
-          } catch (error) {
-            console.error('Error creating axios instance with stored token:', error);
-            setAxiosInstance(axios.create({
-              baseURL: API_CONFIG.BASE_URL,
-              timeout: API_CONFIG.TIMEOUT,
-              headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${storedToken}`
+            const parsedUser = JSON.parse(storedUser);
+            // Validate user object has required properties
+            if (parsedUser && parsedUser.id && parsedUser.username && parsedUser.user_type) {
+              // Set user and token immediately for better UX
+              setToken(storedToken);
+              setUser(parsedUser);
+              
+              // Create axios instance with stored token
+              try {
+                const newAxiosInstance = createAxiosInstance(storedToken, logout);
+                setAxiosInstance(newAxiosInstance);
+              } catch (error) {
+                console.error('Error creating axios instance with stored token:', error);
+                setAxiosInstance(axios.create({
+                  baseURL: API_CONFIG.BASE_URL,
+                  timeout: API_CONFIG.TIMEOUT,
+                  headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${storedToken}`
+                  }
+                }));
               }
-            }));
+            } else {
+              console.error('Invalid user data structure:', parsedUser);
+              // Clear invalid data
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('user');
+            }
+          } catch (error) {
+            console.error('Error parsing stored user data:', error);
+            // Clear invalid data
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
           }
-        } else {
-          console.error('Invalid user data structure:', parsedUser);
-          // Clear invalid data
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('user');
         }
       } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        // Clear invalid data
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
+        console.error('Error during authentication check:', error);
+      } finally {
+        // Always set loading to false after checking for stored authentication
+        setIsLoading(false);
       }
-    }
+    };
+
+    checkStoredAuth();
   }, []);
 
   // Expose axiosInstance if needed in other components
@@ -214,6 +243,7 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
     token,
     login,
     logout,
+    validateToken,
     axiosInstance,
     isLoading,
     setResetViewCallback

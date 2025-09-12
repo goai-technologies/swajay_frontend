@@ -7,7 +7,7 @@ import { User, Mail, Shield, Calendar, Building } from 'lucide-react';
 const Profile: React.FC = () => {
   const { user } = useAuth();
 
-  if (!user || !user.id || !user.username || !user.role) {
+  if (!user || !user.id || !user.username || !user.user_type) {
     return (
       <div className="p-6 bg-gray-100 min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -17,8 +17,8 @@ const Profile: React.FC = () => {
     );
   }
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
+  const getUserTypeColor = (user_type: string) => {
+    switch (user_type) {
       case 'Admin':
         return 'bg-red-100 text-red-800 border-red-200';
       case 'Supervisor':
@@ -75,9 +75,9 @@ const Profile: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <Shield className="h-5 w-5 text-gray-400" />
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Role</p>
-                  <Badge className={`${getRoleColor(user.role)} border mt-1`}>
-                    {user.role}
+                  <p className="text-sm font-medium text-gray-600">User Type</p>
+                  <Badge className={`${getUserTypeColor(user.user_type)} border mt-1`}>
+                    {user.user_type}
                   </Badge>
                 </div>
               </div>
@@ -111,8 +111,8 @@ const Profile: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-600">Access Level</span>
-              <Badge className={`${getRoleColor(user.role)} border`}>
-                {user.role}
+              <Badge className={`${getUserTypeColor(user.user_type)} border`}>
+                {user.user_type}
               </Badge>
             </div>
 
@@ -131,7 +131,7 @@ const Profile: React.FC = () => {
                   <span className="text-sm text-gray-600">View My Queue</span>
                   <span className="text-green-600">✓</span>
                 </div>
-                {(user.role === 'Admin' || user.role === 'Supervisor') && (
+                {(user.user_type === 'Admin' || user.user_type === 'Supervisor') && (
                   <>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Create Orders</span>
