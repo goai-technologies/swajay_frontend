@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import OrderLogDialog from './OrderLogDialog';
+import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 
 interface Order {
   id: string;
@@ -57,7 +58,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
 
   const fetchClients = async () => {
     try {
-      const response = await fetch('http://localhost:5001/clients?page=1&page_size=100', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.CLIENTS}?page=1&page_size=100`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -94,7 +95,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
       };
       
       // Use direct fetch call with corrected headers
-      const response = await fetch(`http://localhost:5001/orders?page=${page}&page_size=10`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.ORDERS}?page=${page}&page_size=10`, {
         method: 'GET',
         headers: headers,
       });
@@ -217,7 +218,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
             <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Data</h3>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
-              onClick={fetchOrders}
+              onClick={() => fetchOrders()}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Retry
