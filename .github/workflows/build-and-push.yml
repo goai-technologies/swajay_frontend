@@ -43,4 +43,4 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           aws-role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           codedeploy-app-name: stand-alone-swajay-client
-          codedeploy-deployment-group: stand-alone-swajay-client-pipeline-dg
+          codedeploy-deployment-group: stand-alone-swajay-client-dg
