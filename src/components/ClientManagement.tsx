@@ -58,13 +58,17 @@ const ClientManagement: React.FC = () => {
 
   const handleCreateClient = async (clientData: Partial<Client>) => {
     try {
+      const sanitizedClientData = {
+        ...clientData,
+        phone: (clientData.phone || '').replace(/\D/g, ''),
+      };
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.CLIENTS}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(clientData),
+        body: JSON.stringify(sanitizedClientData),
       });
 
       if (!response.ok) {
@@ -102,13 +106,17 @@ const ClientManagement: React.FC = () => {
     if (!selectedClient) return;
 
     try {
+      const sanitizedClientData = {
+        ...clientData,
+        phone: (clientData.phone || '').replace(/\D/g, ''),
+      };
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.CLIENT_BY_ID(selectedClient.id)}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(clientData),
+        body: JSON.stringify(sanitizedClientData),
       });
 
       if (!response.ok) {
