@@ -114,7 +114,7 @@ const AppLayout: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main className={`flex-1 bg-gray-100 transition-all duration-300 ease-in-out ${sidebarOpen && !isMobile ? 'ml-64' : ''} overflow-hidden`}>
+      <main className={`flex-1 bg-gray-100 transition-all duration-300 ease-in-out ${sidebarOpen && !isMobile ? 'ml-80' : ''} overflow-hidden`}>
         {/* Welcome Message - Top Right */}
         <div className="bg-white border-b border-gray-200 px-6 py-3">
           <div className="flex justify-end">
