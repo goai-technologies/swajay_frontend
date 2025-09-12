@@ -33,6 +33,7 @@ interface WorkItem {
   order_id: string;
   file_number: string;
   borrower_name: string;
+  owner_name: string;
   order_type: string;
   priority: 'Normal' | 'Rush';
   step_name: string;
@@ -442,7 +443,7 @@ const WorkArea: React.FC = () => {
                   <div className="space-y-3">
                     <div className="flex items-center text-sm text-gray-600">
                       <User className="h-4 w-4 mr-2" />
-                      <span>{item.borrower_name}</span>
+                      <span>{item.owner_name}</span>
                     </div>
                     
                     <div className="flex items-center text-sm text-gray-600">

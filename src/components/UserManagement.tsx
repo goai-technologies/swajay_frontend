@@ -652,7 +652,7 @@ const UserManagement: React.FC = () => {
                     Clients
                   </label>
                   <MultiSelect
-                    options={clients.map(client => ({ value: client.id, label: client.name }))}
+                    options={clients.map(client => ({ value: client.name, label: client.name }))}
                     selected={formData.clients}
                     onChange={(selected) => handleInputChange('clients', selected)}
                     placeholder="Select clients"
