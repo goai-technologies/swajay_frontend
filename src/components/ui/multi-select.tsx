@@ -21,6 +21,7 @@ interface MultiSelectProps {
   disabled?: boolean;
   maxDisplay?: number;
   showAbbreviation?: boolean;
+  showSelectAll?: boolean;
 }
 
 const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
@@ -33,6 +34,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
     disabled = false,
     maxDisplay = 3,
     showAbbreviation = false,
+    showSelectAll = false,
     ...props 
   }, ref) => {
     const [open, setOpen] = React.useState(false)
@@ -48,6 +50,19 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
         onChange([...selected, currentValue])
       }
     }
+
+    const handleSelectAll = () => {
+      if (selected.length === options.length) {
+        // If all are selected, deselect all
+        onChange([])
+      } else {
+        // Select all options
+        onChange(options.map(option => option.value))
+      }
+    }
+
+    const isAllSelected = selected.length === options.length && options.length > 0
+    const isPartiallySelected = selected.length > 0 && selected.length < options.length
 
     const getSelectedOptions = () => {
       return options.filter(option => selected.includes(option.value))
@@ -134,6 +149,29 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
             <CommandList>
               <CommandEmpty>No items found.</CommandEmpty>
               <CommandGroup>
+                {showSelectAll && options.length > 0 && (
+                  <CommandItem
+                    key="select-all"
+                    value="select-all"
+                    onSelect={handleSelectAll}
+                    className="cursor-pointer font-medium border-b border-gray-200"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        isAllSelected ? "opacity-100" : isPartiallySelected ? "opacity-50" : "opacity-0"
+                      )}
+                    />
+                    <div className="flex items-center">
+                      <span className="text-blue-600">
+                        {isAllSelected ? "Deselect All" : "Select All"}
+                      </span>
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({selected.length}/{options.length})
+                      </span>
+                    </div>
+                  </CommandItem>
+                )}
                 {options.map((option) => (
                   <CommandItem
                     key={option.value}

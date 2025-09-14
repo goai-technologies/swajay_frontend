@@ -393,6 +393,7 @@ const OrderEntry: React.FC = () => {
                 showAbbreviation={true}
                 maxDisplay={3}
                 className="w-full"
+                showSelectAll={true}
               />
             </div>
 

@@ -629,6 +629,7 @@ const UserManagement: React.FC = () => {
                     onChange={(selected) => handleInputChange('capabilities', selected)}
                     placeholder="Select capabilities"
                     className="w-full"
+                    showSelectAll={true}
                   />
                 </div>
                 
@@ -644,6 +645,7 @@ const UserManagement: React.FC = () => {
                     showAbbreviation={true}
                     maxDisplay={3}
                     className="w-full"
+                    showSelectAll={true}
                   />
                 </div>
                 
@@ -657,6 +659,7 @@ const UserManagement: React.FC = () => {
                     onChange={(selected) => handleInputChange('clients', selected)}
                     placeholder="Select clients"
                     className="w-full"
+                    showSelectAll={true}
                   />
                 </div>
                 
@@ -670,6 +673,7 @@ const UserManagement: React.FC = () => {
                     onChange={(selected) => handleInputChange('order_types', selected)}
                     placeholder="Select order types"
                     className="w-full"
+                    showSelectAll={true}
                   />
                 </div>
               </div>
