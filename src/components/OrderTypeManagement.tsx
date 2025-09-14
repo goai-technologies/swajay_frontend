@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -205,7 +205,7 @@ const OrderTypeManagement: React.FC = () => {
     selectedOrderType ? handleUpdateOrderType() : handleCreateOrderType();
   }, [formData, selectedOrderType, handleUpdateOrderType, handleCreateOrderType]);
 
-  const OrderTypeDialog = () => (
+  const OrderTypeDialog = useMemo(() => (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
@@ -261,7 +261,7 @@ const OrderTypeManagement: React.FC = () => {
         </div>
       </DialogContent>
     </Dialog>
-  );
+  ), [isDialogOpen, selectedOrderType, formData.order_type_name, isSubmitting, handleFormSubmit]);
 
   return (
     <div className="p-6 bg-gray-100 h-full overflow-y-auto">
@@ -342,7 +342,7 @@ const OrderTypeManagement: React.FC = () => {
         </Table>
       </div>
       
-      <OrderTypeDialog />
+      {OrderTypeDialog}
     </div>
   );
 };

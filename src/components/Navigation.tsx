@@ -39,6 +39,7 @@ const Navigation: React.FC<NavigationProps> = ({ isMobile, sidebarOpen, onViewCh
         { id: 'clients', label: 'Client Management', icon: Building2 },
         { id: 'capabilities', label: 'Capabilities Management', icon: Settings },
         { id: 'order-types', label: 'Order Types Management', icon: ClipboardList },
+        { id: 'steps-library', label: 'Steps Library Management', icon: BookOpen },
       ];
     }
     

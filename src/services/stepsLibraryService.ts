@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_CONFIG } from '@/constants/api';
+import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 
 const BASE_URL = API_CONFIG.BASE_URL;
 
@@ -7,9 +7,9 @@ const getAuthHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem('authToken')}`,
 });
 
-export const createStepLibraryItem = async (step_name: string, description: string) => {
+export const createStepLibraryItem = async (step_name: string, description?: string) => {
   const response = await axios.post(
-    `${BASE_URL}/steps_library`,
+    `${BASE_URL}${API_ENDPOINTS.STEPS_LIBRARY}`,
     { step_name, description },
     { headers: getAuthHeaders() }
   );
@@ -17,34 +17,30 @@ export const createStepLibraryItem = async (step_name: string, description: stri
 };
 
 export const getAllStepLibraryItems = async () => {
-  const response = await axios.get(`${BASE_URL}/steps_library`, { headers: getAuthHeaders() });
+  const response = await axios.get(`${BASE_URL}${API_ENDPOINTS.STEPS_LIBRARY}`, { headers: getAuthHeaders() });
   return response.data;
 };
 
-export const getStepLibraryItemById = async (step_library_item_id: string) => {
+export const getStepLibraryItemById = async (step_id: string) => {
   const response = await axios.get(
-    `${BASE_URL}/steps_library/${step_library_item_id}`,
+    `${BASE_URL}${API_ENDPOINTS.STEP_BY_ID(step_id)}`,
     { headers: getAuthHeaders() }
   );
   return response.data;
 };
 
-export const updateStepLibraryItem = async (
-  step_library_item_id: string,
-  step_name: string,
-  description: string
-) => {
+export const updateStepLibraryItem = async (step_id: string, step_name: string, description?: string) => {
   const response = await axios.put(
-    `${BASE_URL}/steps_library/${step_library_item_id}`,
+    `${BASE_URL}${API_ENDPOINTS.STEP_BY_ID(step_id)}`,
     { step_name, description },
     { headers: getAuthHeaders() }
   );
   return response.data;
 };
 
-export const deleteStepLibraryItem = async (step_library_item_id: string) => {
+export const deleteStepLibraryItem = async (step_id: string) => {
   const response = await axios.delete(
-    `${BASE_URL}/steps_library/${step_library_item_id}`,
+    `${BASE_URL}${API_ENDPOINTS.STEP_BY_ID(step_id)}`,
     { headers: getAuthHeaders() }
   );
   return response.data;

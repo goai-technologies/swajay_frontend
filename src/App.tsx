@@ -11,7 +11,7 @@ import AppLayout from "./components/AppLayout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CapabilitiesPage from "./pages/CapabilitiesPage";
-import StepsLibraryManagement from "./components/StepsLibraryManagement";
+import StepsLibraryPage from "./pages/StepsLibraryPage";
 import OrderTypePage from "./pages/OrderTypePage";
 import OrderTypeStepsMappingPage from "./pages/OrderTypeStepsMappingPage";
 
@@ -36,7 +36,7 @@ const App = () => (
                 <Route path="/dashboard" element={<AppLayout />} />
                 <Route path="/dashboard/:view" element={<AppLayout />} />
                 <Route path="/capabilities" element={<CapabilitiesPage />} />
-                <Route path="/steps-library" element={<StepsLibraryManagement />} />
+                <Route path="/steps-library" element={<StepsLibraryPage />} />
                 <Route path="/order-types" element={<OrderTypePage />} />
                 <Route path="/order-types/:order_type_id/steps-mapping" element={<OrderTypeStepsMappingPage />} />
                 <Route path="*" element={<NotFound />} />

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ORDER_TYPES, ORDER_TYPE_DESCRIPTIONS } from '@/constants/orderTypes';
+import { ORDER_TYPE_DESCRIPTIONS } from '@/constants/orderTypes';
 import { US_STATES } from '@/constants/states';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { useAppContext } from '@/contexts/AppContext';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
+import { getAllOrderTypes } from '@/services/orderTypeService';
 
 interface Client {
   id: string;
@@ -50,6 +51,9 @@ const OrderEntry: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
   const [clientsError, setClientsError] = useState<string | null>(null);
+  const [orderTypes, setOrderTypes] = useState<{id: string, order_type_name: string}[]>([]);
+  const [orderTypesLoading, setOrderTypesLoading] = useState(true);
+  const [orderTypesError, setOrderTypesError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { token } = useAuth();
   const { setCurrentView } = useAppContext();
@@ -64,6 +68,7 @@ const OrderEntry: React.FC = () => {
   useEffect(() => {
     if (token) {
       fetchClients();
+      fetchOrderTypes();
     }
   }, [token]);
 
@@ -95,6 +100,26 @@ const OrderEntry: React.FC = () => {
       setClientsError('Failed to fetch clients: ' + err.message);
     } finally {
       setClientsLoading(false);
+    }
+  };
+
+  const fetchOrderTypes = async () => {
+    try {
+      setOrderTypesLoading(true);
+      setOrderTypesError(null);
+
+      const response = await getAllOrderTypes();
+
+      if (response.success) {
+        setOrderTypes(response.data);
+      } else {
+        setOrderTypesError('Failed to fetch order types: ' + response.message);
+      }
+    } catch (err: any) {
+      console.error('Error fetching order types:', err);
+      setOrderTypesError('Failed to fetch order types: ' + err.message);
+    } finally {
+      setOrderTypesLoading(false);
     }
   };
 
@@ -296,11 +321,14 @@ const OrderEntry: React.FC = () => {
                 value={formData.orderType}
                 onChange={(e) => handleInputChange('orderType', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={orderTypesLoading}
               >
-                <option value="">Order Type</option>
-                {[...ORDER_TYPES].sort().map(type => (
-                  <option key={type} value={type}>
-                    {type}
+                <option value="">
+                  {orderTypesLoading ? "Loading order types..." : "Order Type"}
+                </option>
+                {orderTypes.sort((a, b) => a.order_type_name.localeCompare(b.order_type_name)).map(type => (
+                  <option key={type.id} value={type.order_type_name}>
+                    {type.order_type_name}
                   </option>
                 ))}
               </select>

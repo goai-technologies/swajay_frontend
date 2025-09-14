@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -199,7 +199,7 @@ const CapabilitiesManagement: React.FC = () => {
     selectedCapability ? handleUpdateCapability() : handleCreateCapability();
   }, [formData, selectedCapability, handleUpdateCapability, handleCreateCapability]);
 
-  const CapabilityDialog = () => (
+  const CapabilityDialog = useMemo(() => (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
@@ -255,7 +255,7 @@ const CapabilitiesManagement: React.FC = () => {
         </div>
       </DialogContent>
     </Dialog>
-  );
+  ), [isDialogOpen, selectedCapability, formData.capability_name, isSubmitting, handleFormSubmit]);
 
   return (
     <div className="p-6 bg-gray-100 h-full overflow-y-auto">
@@ -329,7 +329,7 @@ const CapabilitiesManagement: React.FC = () => {
         </Table>
       </div>
       
-      <CapabilityDialog />
+      {CapabilityDialog}
     </div>
   );
 };

@@ -36,8 +36,8 @@ export const API_ENDPOINTS = {
   ORDER_TYPE_STEPS_MAPPING: (id: string) => `/order-types/${id}/steps_mapping`,
   
   // Steps Library
-  STEPS_LIBRARY: '/steps-library',
-  STEP_BY_ID: (id: string) => `/steps-library/${id}`,
+  STEPS_LIBRARY: '/steps_library',
+  STEP_BY_ID: (id: string) => `/steps_library/${id}`,
   
   // Capabilities
   CAPABILITIES: '/capabilities',

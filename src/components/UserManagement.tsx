@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { toast } from '@/components/ui/use-toast';
-import { ORDER_TYPES } from '@/constants/orderTypes';
 import { US_STATES } from '@/constants/states';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { getAllOrderTypes } from '@/services/orderTypeService';
+import { getAllCapabilities } from '@/services/capabilitiesService';
 import { 
   Edit, 
   Trash2, 
@@ -23,18 +24,6 @@ import {
 // Constants for dropdown options
 const EMPLOYEE_TYPES = ['Inhouse', 'Vendor'];
 const USER_TYPES = ['Processor', 'Supervisor', 'Admin', 'Order Entry', 'test user'];
-const CAPABILITIES = [
-  'Search/Exam', 
-  'Typing', 
-  'Proofing', 
-  'Commitment Review', 
-  'Document Retrieval', 
-  'Update', 
-  'Update QC', 
-  'Search QC', 
-  'Final QC', 
-  'Commitment Review QC'
-];
 // Convert US_STATES to MultiSelectOption format
 const stateOptions = US_STATES.map(state => ({
   value: state.value,
@@ -116,6 +105,10 @@ const UserManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clients, setClients] = useState<{id: string, name: string}[]>([]);
+  const [orderTypes, setOrderTypes] = useState<{id: string, order_type_name: string}[]>([]);
+  const [capabilities, setCapabilities] = useState<{id: string, capability_name: string}[]>([]);
+  const [orderTypesLoading, setOrderTypesLoading] = useState(false);
+  const [capabilitiesLoading, setCapabilitiesLoading] = useState(false);
   const { token } = useAuth();
 
   const fetchUsers = useCallback(async () => {
@@ -380,10 +373,60 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const fetchOrderTypes = async () => {
+    if (!token) return;
+    
+    try {
+      setOrderTypesLoading(true);
+      const response = await getAllOrderTypes();
+      
+      if (response.success) {
+        setOrderTypes(response.data);
+      } else {
+        throw new Error(response.message || 'Failed to fetch order types');
+      }
+    } catch (error: any) {
+      console.error('Error fetching order types:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch order types",
+        variant: "destructive"
+      });
+    } finally {
+      setOrderTypesLoading(false);
+    }
+  };
+
+  const fetchCapabilities = async () => {
+    if (!token) return;
+    
+    try {
+      setCapabilitiesLoading(true);
+      const response = await getAllCapabilities();
+      
+      if (response.success) {
+        setCapabilities(response.data);
+      } else {
+        throw new Error(response.message || 'Failed to fetch capabilities');
+      }
+    } catch (error: any) {
+      console.error('Error fetching capabilities:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch capabilities",
+        variant: "destructive"
+      });
+    } finally {
+      setCapabilitiesLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       fetchUsers();
       fetchClients();
+      fetchOrderTypes();
+      fetchCapabilities();
     }
   }, [token]);
 
@@ -624,12 +667,13 @@ const UserManagement: React.FC = () => {
                     Capabilities
                   </label>
                   <MultiSelect
-                    options={CAPABILITIES.map(capability => ({ value: capability, label: capability }))}
+                    options={capabilities.map(capability => ({ value: capability.capability_name, label: capability.capability_name }))}
                     selected={formData.capabilities}
                     onChange={(selected) => handleInputChange('capabilities', selected)}
-                    placeholder="Select capabilities"
+                    placeholder={capabilitiesLoading ? "Loading capabilities..." : "Select capabilities"}
                     className="w-full"
                     showSelectAll={true}
+                    disabled={capabilitiesLoading}
                   />
                 </div>
                 
@@ -668,12 +712,13 @@ const UserManagement: React.FC = () => {
                     Order Types
                   </label>
                   <MultiSelect
-                    options={ORDER_TYPES.map(type => ({ value: type, label: type }))}
+                    options={orderTypes.map(type => ({ value: type.order_type_name, label: type.order_type_name }))}
                     selected={formData.order_types}
                     onChange={(selected) => handleInputChange('order_types', selected)}
-                    placeholder="Select order types"
+                    placeholder={orderTypesLoading ? "Loading order types..." : "Select order types"}
                     className="w-full"
                     showSelectAll={true}
+                    disabled={orderTypesLoading}
                   />
                 </div>
               </div>
