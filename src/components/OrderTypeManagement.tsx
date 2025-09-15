@@ -57,6 +57,9 @@ const OrderTypeManagement: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
+  const hasActiveFilters = useCallback(() => {
+    return [search.trim()].some(v => v && v.trim() !== '');
+  }, [search]);
 
   const fetchOrderTypes = useCallback(async (page: number = 1) => {
     if (!token) return;
@@ -93,7 +96,7 @@ const OrderTypeManagement: React.FC = () => {
     }
   }, [token, search, sortBy, sortDir]);
 
-  const hasActiveFilters = useState(false);
+  // removed duplicate hasActiveFilters state
 
   const applyFilters = useCallback(() => {
     setCurrentPage(1);
@@ -341,6 +344,11 @@ const OrderTypeManagement: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             <span>Filters</span>
+            {hasActiveFilters() && (
+              <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-1">
+                {[search.trim()].filter(v => v && v.trim() !== '').length}
+              </span>
+            )}
           </button>
           <Button onClick={() => {
             setSortBy('created_at');
