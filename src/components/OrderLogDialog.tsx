@@ -17,7 +17,8 @@ import {
   Phone,
   Mail,
   Building,
-  Edit
+  Edit,
+  X
 } from 'lucide-react';
 import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 import EditOrderDialog from './EditOrderDialog';
@@ -214,6 +215,17 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-2 z-50 flex justify-end">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Close"
+            onClick={() => onOpenChange(false)}
+            className="rounded-full shadow-md"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold">

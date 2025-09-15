@@ -108,10 +108,10 @@ const OrderEntry: React.FC = () => {
       setOrderTypesLoading(true);
       setOrderTypesError(null);
 
-      const response = await getAllOrderTypes();
+      const response = await getAllOrderTypes({ page: 1, page_size: 100, sort_by: 'order_type_name', sort_dir: 'asc' });
 
       if (response.success) {
-        setOrderTypes(response.data);
+        setOrderTypes(response.data?.items || response.data);
       } else {
         setOrderTypesError('Failed to fetch order types: ' + response.message);
       }

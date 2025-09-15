@@ -186,12 +186,12 @@ const OrderTypeStepsMapping: React.FC = () => {
     if (!token) return;
     
     try {
-      const response = await getAllStepLibraryItems();
+      const response = await getAllStepLibraryItems({ page: 1, page_size: 500, sort_by: 'step_name', sort_dir: 'asc' });
       
       console.log('Available steps response:', response); // Debug log
       
       if (response.success && response.data) {
-        const steps = Array.isArray(response.data) ? response.data : [];
+        const steps = Array.isArray((response as any).data?.items) ? (response as any).data.items : (Array.isArray(response.data) ? response.data : []);
         setAvailableSteps(steps);
       } else {
         console.log('No available steps found or API error:', response);
