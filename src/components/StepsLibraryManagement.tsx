@@ -98,7 +98,7 @@ const StepsLibraryManagement: React.FC = () => {
     }
   }, [token, search, sortBy, sortDir]);
 
-  const hasActiveFilters = useState(false);
+  // removed duplicate hasActiveFilters state
 
   const applyFilters = useCallback(() => {
     setCurrentPage(1);
