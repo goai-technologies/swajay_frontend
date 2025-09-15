@@ -19,6 +19,7 @@ interface Order {
   client_id: string;
   client_name?: string;
   file_number?: string;
+  client_order_number?: string;
   status: string;
   priority: string;
   created_at: string;
@@ -432,13 +433,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
             {/* File Number Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                File Number
+                File/Client Order #
               </label>
               <input
                 type="text"
                 value={filters.fileNumber}
                 onChange={(e) => handleFilterChange('fileNumber', e.target.value)}
-                placeholder="Search by file number..."
+                placeholder="Search by file or client order number..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -590,6 +591,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">File Number</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Client Order #</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Client Name</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -608,6 +610,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
                   >
                     <td className="px-4 py-3 text-sm font-medium text-slate-800">
                       {order.file_number || 'N/A'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {order.client_order_number || 'N/A'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {clients[order.client_id] || 'Loading...'}
@@ -630,7 +635,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
+                  <td colSpan={7} className="px-4 py-6 text-center text-gray-500">
                     No orders found
                   </td>
                 </tr>
