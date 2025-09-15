@@ -16,8 +16,8 @@ export const createCapability = async (capability_name: string) => {
   return response.data;
 };
 
-export const getAllCapabilities = async () => {
-  const response = await axios.get(`${BASE_URL}/capabilities`, { headers: getAuthHeaders() });
+export const getAllCapabilities = async (params?: { page?: number; page_size?: number; search?: string; sort_by?: string; sort_dir?: 'asc' | 'desc'; }) => {
+  const response = await axios.get(`${BASE_URL}/capabilities`, { headers: getAuthHeaders(), params });
   return response.data;
 };
 

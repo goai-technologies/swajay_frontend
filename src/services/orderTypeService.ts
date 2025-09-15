@@ -16,8 +16,8 @@ export const createOrderType = async (order_type_name: string) => {
   return response.data;
 };
 
-export const getAllOrderTypes = async () => {
-  const response = await axios.get(`${BASE_URL}/order_types`, { headers: getAuthHeaders() });
+export const getAllOrderTypes = async (params?: { page?: number; page_size?: number; search?: string; sort_by?: string; sort_dir?: 'asc' | 'desc'; }) => {
+  const response = await axios.get(`${BASE_URL}/order_types`, { headers: getAuthHeaders(), params });
   return response.data;
 };
 
