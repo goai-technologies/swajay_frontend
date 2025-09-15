@@ -60,7 +60,7 @@ const StepsLibraryManagement: React.FC = () => {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
-  const fetchStepLibraryItems = async (page: number = 1) => {
+  const fetchStepLibraryItems = useCallback(async (page: number = 1) => {
     if (!token) return;
     
     try {
@@ -93,14 +93,14 @@ const StepsLibraryManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, search, sortBy, sortDir]);
 
   const hasActiveFilters = useState(false);
 
   const applyFilters = useCallback(() => {
     setCurrentPage(1);
     fetchStepLibraryItems(1);
-  }, []);
+  }, [fetchStepLibraryItems]);
 
   const clearFilters = useCallback(() => {
     setSearch('');
@@ -108,7 +108,7 @@ const StepsLibraryManagement: React.FC = () => {
     setSortDir('desc');
     setCurrentPage(1);
     fetchStepLibraryItems(1);
-  }, []);
+  }, [fetchStepLibraryItems]);
 
   const handleCreateStepItem = async () => {
     if (!token || isSubmitting || !formData.step_name.trim()) return;
@@ -229,7 +229,7 @@ const StepsLibraryManagement: React.FC = () => {
       fetchStepLibraryItems(1);
       setCurrentPage(1);
     }
-  }, [token]);
+  }, [token, fetchStepLibraryItems]);
 
   const handleFormSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();

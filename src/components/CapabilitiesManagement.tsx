@@ -56,7 +56,7 @@ const CapabilitiesManagement: React.FC = () => {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
-  const fetchCapabilities = async (page: number = 1) => {
+  const fetchCapabilities = useCallback(async (page: number = 1) => {
     if (!token) return;
     
     try {
@@ -89,7 +89,7 @@ const CapabilitiesManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, search, sortBy, sortDir]);
 
   const hasActiveFilters = useCallback(() => {
     return [search.trim()].some(v => v && v.trim() !== '');
@@ -98,7 +98,7 @@ const CapabilitiesManagement: React.FC = () => {
   const applyFilters = useCallback(() => {
     setCurrentPage(1);
     fetchCapabilities(1);
-  }, []);
+  }, [fetchCapabilities]);
 
   const clearFilters = useCallback(() => {
     setSearch('');
@@ -106,7 +106,7 @@ const CapabilitiesManagement: React.FC = () => {
     setSortDir('desc');
     setCurrentPage(1);
     fetchCapabilities(1);
-  }, []);
+  }, [fetchCapabilities]);
 
   const handleCreateCapability = async () => {
     if (!token || isSubmitting || !formData.capability_name.trim()) return;
@@ -218,7 +218,7 @@ const CapabilitiesManagement: React.FC = () => {
       fetchCapabilities(1);
       setCurrentPage(1);
     }
-  }, [token]);
+  }, [token, fetchCapabilities]);
 
   const handleFormSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();

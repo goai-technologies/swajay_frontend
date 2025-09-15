@@ -58,7 +58,7 @@ const OrderTypeManagement: React.FC = () => {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
-  const fetchOrderTypes = async (page: number = 1) => {
+  const fetchOrderTypes = useCallback(async (page: number = 1) => {
     if (!token) return;
     
     try {
@@ -91,14 +91,14 @@ const OrderTypeManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, search, sortBy, sortDir]);
 
   const hasActiveFilters = useState(false);
 
   const applyFilters = useCallback(() => {
     setCurrentPage(1);
     fetchOrderTypes(1);
-  }, []);
+  }, [fetchOrderTypes]);
 
   const clearFilters = useCallback(() => {
     setSearch('');
@@ -106,7 +106,7 @@ const OrderTypeManagement: React.FC = () => {
     setSortDir('desc');
     setCurrentPage(1);
     fetchOrderTypes(1);
-  }, []);
+  }, [fetchOrderTypes]);
 
   const handleCreateOrderType = async () => {
     if (!token || isSubmitting || !formData.order_type_name.trim()) return;
@@ -222,7 +222,7 @@ const OrderTypeManagement: React.FC = () => {
       fetchOrderTypes(1);
       setCurrentPage(1);
     }
-  }, [token]);
+  }, [token, fetchOrderTypes]);
 
   const handleFormSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
