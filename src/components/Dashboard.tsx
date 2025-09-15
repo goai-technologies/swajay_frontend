@@ -549,42 +549,40 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole }) => {
         </div>
 
         {/* Top Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between text-sm text-gray-700">
-            <div>
-              Showing <span className="font-semibold text-blue-600">{((currentPage - 1) * 10) + 1}</span> to <span className="font-semibold text-blue-600">{Math.min(currentPage * 10, totalOrders)}</span> of <span className="font-semibold text-blue-600">{totalOrders}</span> orders
-            </div>
-            <div className="space-x-2">
-              <button
-                onClick={() => {
-                  if (currentPage > 1) {
-                    const newPage = currentPage - 1;
-                    setCurrentPage(newPage);
-                    fetchOrders(newPage, filters);
-                  }
-                }}
-                disabled={currentPage === 1}
-                className="px-4 py-2 border rounded-md disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="px-3 py-2 border rounded-md">Page {currentPage} of {totalPages}</span>
-              <button
-                onClick={() => {
-                  if (currentPage < totalPages) {
-                    const newPage = currentPage + 1;
-                    setCurrentPage(newPage);
-                    fetchOrders(newPage, filters);
-                  }
-                }}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 border rounded-md disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between text-sm text-gray-700">
+          <div>
+            Showing <span className="font-semibold text-blue-600">{((currentPage - 1) * 10) + 1}</span> to <span className="font-semibold text-blue-600">{Math.min(currentPage * 10, totalOrders)}</span> of <span className="font-semibold text-blue-600">{totalOrders}</span> orders
           </div>
-        )}
+          <div className="space-x-2">
+            <button
+              onClick={() => {
+                if (currentPage > 1) {
+                  const newPage = currentPage - 1;
+                  setCurrentPage(newPage);
+                  fetchOrders(newPage, filters);
+                }
+              }}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border rounded-md disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="px-3 py-2 border rounded-md">Page {currentPage} of {totalPages}</span>
+            <button
+              onClick={() => {
+                if (currentPage < totalPages) {
+                  const newPage = currentPage + 1;
+                  setCurrentPage(newPage);
+                  fetchOrders(newPage, filters);
+                }
+              }}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border rounded-md disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full">
