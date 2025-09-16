@@ -25,11 +25,13 @@ export const API_ENDPOINTS = {
   ORDER_BY_ID: (id: string) => `/orders/${id}`,
   ORDER_LOG: (id: string) => `/orders/${id}/log`,
   EDIT_ORDER: (id: string) => `/orders/${id}`,
+  ORDER_STATUS: (id: string) => `/orders/${id}/status`,
   
   // Dashboard
   USER_DASHBOARD: (userId: string) => `/dashboard/user/${userId}`,
   REQUEST_WORK: (userId: string) => `/dashboard/user/${userId}/request-work`,
   COMPLETE_STEP: (stepId: string) => `/dashboard/step/${stepId}/complete`,
+  REASSIGN_STEP: (orderId: string) => `/orders/${orderId}/reassign-step`,
   
   // Order Types
   ORDER_TYPES: '/order-types',
