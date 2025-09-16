@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { 
   Clock, 
@@ -18,10 +20,12 @@ import {
   Mail,
   Building,
   Edit,
-  X
+  X,
+  PauseCircle
 } from 'lucide-react';
 import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 import EditOrderDialog from './EditOrderDialog';
+import { Textarea } from '@/components/ui/textarea';
 
 interface OrderLogData {
   order_id: string;
@@ -74,6 +78,13 @@ interface OrderLogData {
     event_type: string;
     timestamp: string;
     details: any;
+    user?: {
+      id: string;
+      username: string;
+      user_type: string;
+      name: string;
+    };
+    comments?: string;
   }>;
   metrics: {
     completion_percentage: number;
@@ -108,11 +119,41 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [reassignOpen, setReassignOpen] = useState(false);
+  const [users, setUsers] = useState<Array<{ id: string; username: string; user_type: string }>>([]);
+  const [assigneeId, setAssigneeId] = useState<string>('');
+  const [isReassigning, setIsReassigning] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const { token, user } = useAuth();
+  const [statusComment, setStatusComment] = useState('');
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.USERS}?page=1&page_size=100`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const data = await response.json();
+      if (data.success && data.data?.items) {
+        setUsers(
+          data.data.items.map((u: any) => ({ id: u.id, username: u.username, user_type: u.user_type }))
+        );
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    }
+  };
 
   useEffect(() => {
     if (open && orderId && token) {
       fetchOrderLog();
+      if (user?.user_type === 'Admin' || user?.user_type === 'Supervisor') {
+        fetchUsers();
+      }
     }
   }, [open, orderId, token]);
 
@@ -203,6 +244,94 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
     return user?.user_type === 'Admin' || user?.user_type === 'Supervisor';
   };
 
+  const handleReassign = async () => {
+    if (!orderId || !assigneeId || !token || !logData?.current_state?.current_step?.step_id) return;
+    try {
+      setIsReassigning(true);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.REASSIGN_STEP(orderId)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ step_id: logData.current_state.current_step.step_id, user_id: assigneeId }),
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${text}`);
+      }
+      const data = await response.json();
+      if (data.success) {
+        toast({ title: 'Reassigned', description: 'Step reassigned successfully.' });
+        setReassignOpen(false);
+        setAssigneeId('');
+        fetchOrderLog();
+      } else {
+        throw new Error(data.message || 'Failed to reassign');
+      }
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to reassign', variant: 'destructive' });
+    } finally {
+      setIsReassigning(false);
+    }
+  };
+
+  const handleToggleHoldStatus = async () => {
+    if (!orderId || !token || !logData) return;
+    
+    if (!statusComment.trim()) {
+      toast({ title: 'Comment required', description: 'Please enter a comment.', variant: 'destructive' });
+      return;
+    }
+    
+    const currentStatus = logData.order_details.status;
+    const newStatus = currentStatus === 'On Hold' ? 'In Progress' : 'On Hold';
+    
+    try {
+      setIsUpdatingStatus(true);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.ORDER_STATUS(orderId)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus, comment: statusComment }),
+      });
+      
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${text}`);
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        toast({ 
+          title: 'Status Updated', 
+          description: `Order status changed to ${newStatus}` 
+        });
+        fetchOrderLog();
+        setStatusComment('');
+        setIsStatusDialogOpen(false);
+      } else {
+        throw new Error(data.message || 'Failed to update status');
+      }
+    } catch (error: any) {
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to update status', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  const canToggleHoldStatus = () => {
+    if (!logData) return false;
+    const status = logData.order_details.status;
+    return status === 'In Progress' || status === 'New' || status === 'On Hold';
+  };
+
   const handleOrderUpdated = () => {
     // Refresh the order log data after edit
     if (open && orderId && token) {
@@ -231,16 +360,51 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
             <DialogTitle className="text-2xl font-bold">
               Order Log {logData?.order_details?.file_number && `- ${logData.order_details.file_number}`}
             </DialogTitle>
-            {canEditOrder() && logData && (
-              <Button
-                size="sm"
-                onClick={() => setEditDialogOpen(true)}
-                className="flex items-center space-x-2"
-              >
-                <Edit className="h-4 w-4" />
-                <span>Edit Order</span>
-              </Button>
-            )}
+            <div className="flex items-center space-x-2">
+              {canEditOrder() && logData && (
+                <Button
+                  size="sm"
+                  onClick={() => setEditDialogOpen(true)}
+                  className="flex items-center space-x-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  <span>Edit Order</span>
+                </Button>
+              )}
+              {canToggleHoldStatus() && (
+                <Button
+                  size="sm"
+                  variant={logData?.order_details?.status === 'On Hold' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setStatusComment('');
+                    setIsStatusDialogOpen(true);
+                  }}
+                  disabled={isUpdatingStatus}
+                  className="flex items-center space-x-2"
+                >
+                  {isUpdatingStatus ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      {logData?.order_details?.status === 'On Hold' ? (
+                        <>
+                          <CheckCircle className="h-4 w-4" />
+                          Resume Order
+                        </>
+                      ) : (
+                        <>
+                          <PauseCircle className="h-4 w-4" />
+                          Put On Hold
+                        </>
+                      )}
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </DialogHeader>
 
@@ -385,13 +549,26 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-start space-x-4">
-                    {getStatusIcon(logData.current_state.current_step.status)}
+                    <div className="mt-1">
+                      {getStatusIcon(logData.current_state.current_step.status)}
+                    </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <h3 className="text-lg font-semibold">{logData.current_state.current_step.step_name}</h3>
-                        <Badge className={`${getStatusColor(logData.current_state.current_step.status)} border`}>
-                          {logData.current_state.current_step.status}
-                        </Badge>
+                        <div className="flex items-center space-x-2">
+                          <Badge className={`${getStatusColor(logData.current_state.current_step.status)} border`}>
+                            {logData.current_state.current_step.status}
+                          </Badge>
+                          {canEditOrder() && (
+                            <Button 
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700"
+                              onClick={() => setReassignOpen(true)}
+                            >
+                              Reassign
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
@@ -421,6 +598,7 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                           <p className="mt-1">{logData.current_state.current_step.comments}</p>
                         </div>
                       )}
+                      {/* Reassign button moved to header next to status */}
                     </div>
                   </div>
                 </CardContent>
@@ -441,7 +619,7 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                     {logData.timeline.map((event, index) => (
                       <div key={index} className="relative flex items-start space-x-4">
                         {/* Timeline dot */}
-                        <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-white border-2 border-blue-200 rounded-full">
+                        <div className="relative z-10 flex items-center justify-center w-10 h-10 bg-white border border-blue-200 rounded-full mt-0.5">
                           {event.event_type === 'order_created' && <FileText className="h-5 w-5 text-blue-600" />}
                           {event.event_type === 'step_started' && <Clock className="h-5 w-5 text-blue-600" />}
                           {event.event_type === 'step_completed' && <CheckCircle className="h-5 w-5 text-green-600" />}
@@ -452,12 +630,21 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                         </div>
                         
                         {/* Timeline content */}
-                        <div className="flex-1 min-w-0 pb-6">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-lg font-semibold text-gray-900">{event.title}</h4>
-                            <span className="text-sm text-gray-500">{formatDate(event.timestamp)}</span>
-                          </div>
+                        <div className="flex-1 min-w-0 pb-6 pt-0.5 pr-36 relative">
+                          <h4 className="text-lg font-semibold text-gray-900">{event.title}</h4>
+                          <span className="absolute top-0 right-0 text-sm text-gray-500">{formatDate(event.timestamp)}</span>
                           <p className="mt-1 text-gray-600">{event.description}</p>
+                          {event.user?.name && (
+                            <p className="mt-1 text-sm text-gray-700">
+                              <span className="font-medium">By:</span> {event.user.name}
+                            </p>
+                          )}
+                          {event.comments && (
+                            <div className="mt-2 px-2 py-2 bg-gray-50 rounded-md text-sm text-gray-700">
+                              <span className="font-medium">Comments:</span>
+                              <p className="mt-1 whitespace-pre-wrap">{event.comments}</p>
+                            </div>
+                          )}
                           
                           {/* Additional details */}
                           {event.details && (
@@ -543,6 +730,63 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
             onOrderUpdated={handleOrderUpdated}
           />
         )}
+
+        {logData?.current_state?.current_step && (
+          <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Reassign Step</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Select User</label>
+                  <Select value={assigneeId} onValueChange={setAssigneeId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map(u => (
+                        <SelectItem key={u.id} value={u.id}>{u.username} ({u.user_type})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setReassignOpen(false)}>Cancel</Button>
+                  <Button onClick={handleReassign} disabled={!assigneeId || isReassigning}>
+                    {isReassigning ? 'Reassigning...' : 'Reassign'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Status Comment Dialog */}
+        <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{logData?.order_details?.status === 'On Hold' ? 'Resume Order' : 'Put Order On Hold'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Comment</label>
+                <Textarea
+                  value={statusComment}
+                  onChange={(e) => setStatusComment(e.target.value)}
+                  placeholder={logData?.order_details?.status === 'On Hold' ? 'Reason to resume...' : 'Reason to put on hold...'}
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsStatusDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleToggleHoldStatus} disabled={isUpdatingStatus || !statusComment.trim()}>
+                  {isUpdatingStatus ? 'Updating...' : (logData?.order_details?.status === 'On Hold' ? 'Resume' : 'Put On Hold')}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

@@ -203,11 +203,12 @@ const WorkArea: React.FC = () => {
         body: JSON.stringify(requestData),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
       const data = await response.json();
+      
+      if (!response.ok) {
+        // Handle server error responses with specific error messages
+        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
       
       if (data.success) {
         toast({
@@ -350,7 +351,7 @@ const WorkArea: React.FC = () => {
               <FileText className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Items</p>
-                <p className="text-2xl font-bold text-gray-900">{dashboardData.work_items.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{dashboardData.summary.total_items}</p>
               </div>
             </div>
           </CardContent>
@@ -363,7 +364,7 @@ const WorkArea: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">In Progress</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {dashboardData.work_items.filter(item => item.step_status === 'In Progress').length}
+                  {dashboardData.summary.in_progress}
                 </p>
               </div>
             </div>
@@ -377,7 +378,7 @@ const WorkArea: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Completed</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {dashboardData.work_items.filter(item => item.step_status === 'Completed').length}
+                  {dashboardData.summary.completed}
                 </p>
               </div>
             </div>
@@ -391,7 +392,7 @@ const WorkArea: React.FC = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Pending</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {dashboardData.work_items.filter(item => item.step_status === 'Pending').length}
+                  {dashboardData.summary.pending}
                 </p>
               </div>
             </div>

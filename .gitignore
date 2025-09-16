@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+appspec.yml
+swajay-client-artifact.zip
+scripts/install_dependencies.sh
+scripts/start_application.sh
+scripts/stop_application.sh
