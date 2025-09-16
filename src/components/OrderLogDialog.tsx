@@ -127,6 +127,7 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
   const { token, user } = useAuth();
   const [statusComment, setStatusComment] = useState('');
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [reassignComment, setReassignComment] = useState('');
 
   const fetchUsers = async () => {
     try {
@@ -246,6 +247,10 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
 
   const handleReassign = async () => {
     if (!orderId || !assigneeId || !token || !logData?.current_state?.current_step?.step_id) return;
+    if (!reassignComment.trim()) {
+      toast({ title: 'Comment required', description: 'Please enter a comment.', variant: 'destructive' });
+      return;
+    }
     try {
       setIsReassigning(true);
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.REASSIGN_STEP(orderId)}`, {
@@ -254,7 +259,7 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ step_id: logData.current_state.current_step.step_id, user_id: assigneeId }),
+        body: JSON.stringify({ step_id: logData.current_state.current_step.step_id, user_id: assigneeId, comment: reassignComment }),
       });
       if (!response.ok) {
         const text = await response.text();
@@ -265,6 +270,7 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
         toast({ title: 'Reassigned', description: 'Step reassigned successfully.' });
         setReassignOpen(false);
         setAssigneeId('');
+        setReassignComment('');
         fetchOrderLog();
       } else {
         throw new Error(data.message || 'Failed to reassign');
@@ -773,9 +779,18 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Comment</label>
+                  <Textarea
+                    value={reassignComment}
+                    onChange={(e) => setReassignComment(e.target.value)}
+                    placeholder="Reason for reassignment..."
+                    className="min-h-[100px]"
+                  />
+                </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setReassignOpen(false)}>Cancel</Button>
-                  <Button onClick={handleReassign} disabled={!assigneeId || isReassigning}>
+                  <Button onClick={handleReassign} disabled={!assigneeId || !reassignComment.trim() || isReassigning}>
                     {isReassigning ? 'Reassigning...' : 'Reassign'}
                   </Button>
                 </div>
