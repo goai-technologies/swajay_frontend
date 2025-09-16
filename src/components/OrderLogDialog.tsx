@@ -215,21 +215,34 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-2 z-50 flex justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Close"
-            onClick={() => onOpenChange(false)}
-            className="rounded-full shadow-md"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-        <DialogHeader>
-          <div className="flex items-center justify-between">
+        <DialogHeader className="sticky top-0 z-50 bg-white border-b">
+          {/* Row 1: Close button aligned right */}
+          <div className="flex items-center justify-end py-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Close"
+              onClick={() => onOpenChange(false)}
+              className="rounded-full"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Row 2: Title on left, Edit button on right */}
+          <div className="flex items-center justify-between pb-3">
             <DialogTitle className="text-2xl font-bold">
-              Order Log {logData?.order_details?.file_number && `- ${logData.order_details.file_number}`}
+              {(() => {
+                const clientOrderNo = logData?.order_details?.client_order_number;
+                const fileNo = logData?.order_details?.file_number;
+                if (clientOrderNo && String(clientOrderNo).trim() !== '') {
+                  return `Client Order # - ${clientOrderNo}`;
+                }
+                if (fileNo && String(fileNo).trim() !== '') {
+                  return `Order Log - ${fileNo}`;
+                }
+                return 'Order Log';
+              })()}
             </DialogTitle>
             {canEditOrder() && logData && (
               <Button
@@ -274,6 +287,10 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                     <div>
                       <span className="font-medium text-gray-600">File Number:</span>
                       <p className="font-semibold">{logData.order_details.file_number}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Client Order #:</span>
+                      <p className="font-semibold">{logData.order_details.client_order_number ?? 'N/A'}</p>
                     </div>
                     <div>
                       <span className="font-medium text-gray-600">Order Type:</span>
@@ -369,7 +386,12 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
                   </div>
                   <div className="bg-purple-50 p-4 rounded-lg">
                     <div className="text-2xl font-bold text-purple-600">
-                      {Math.round(logData.metrics.completion_percentage)}%
+                      {(() => {
+                        const total = logData.total_steps || 0;
+                        const completed = logData.completed_steps || 0;
+                        const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+                        return `${pct}%`;
+                      })()}
                     </div>
                     <div className="text-sm text-gray-600">Complete</div>
                   </div>
