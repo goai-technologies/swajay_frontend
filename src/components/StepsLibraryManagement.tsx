@@ -24,6 +24,7 @@ interface StepLibraryItem {
   id: string;
   step_name: string;
   description?: string;
+  expected_time_minutes?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -37,6 +38,7 @@ interface StepLibraryResponse {
 interface StepLibraryFormData {
   step_name: string;
   description: string;
+  expected_time_minutes: number | '';
 }
 
 const StepsLibraryManagement: React.FC = () => {
@@ -45,7 +47,8 @@ const StepsLibraryManagement: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<StepLibraryFormData>({
     step_name: '',
-    description: ''
+    description: '',
+    expected_time_minutes: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -121,7 +124,8 @@ const StepsLibraryManagement: React.FC = () => {
     try {
       const response = await createStepLibraryItem(
         formData.step_name.trim(), 
-        formData.description.trim() || undefined
+        formData.description.trim() || undefined,
+        formData.expected_time_minutes ? Number(formData.expected_time_minutes) : undefined
       );
       
       if (response.success) {
@@ -155,7 +159,8 @@ const StepsLibraryManagement: React.FC = () => {
       const response = await updateStepLibraryItem(
         selectedStepItem.id, 
         formData.step_name.trim(),
-        formData.description.trim() || undefined
+        formData.description.trim() || undefined,
+        formData.expected_time_minutes ? Number(formData.expected_time_minutes) : undefined
       );
       
       if (response.success) {
@@ -209,7 +214,8 @@ const StepsLibraryManagement: React.FC = () => {
   const resetForm = () => {
     setFormData({
       step_name: '',
-      description: ''
+      description: '',
+      expected_time_minutes: ''
     });
     setSelectedStepItem(null);
   };
@@ -219,7 +225,8 @@ const StepsLibraryManagement: React.FC = () => {
       setSelectedStepItem(stepItem);
       setFormData({
         step_name: stepItem.step_name,
-        description: stepItem.description || ''
+        description: stepItem.description || '',
+        expected_time_minutes: stepItem.expected_time_minutes || ''
       });
     } else {
       resetForm();
@@ -287,6 +294,21 @@ const StepsLibraryManagement: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter step description (optional)"
                 rows={3}
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <BookOpen className="w-4 h-4 mr-2" />
+                Expected Time to complete the step (in mins)
+              </label>
+              <Input
+                type="number"
+                value={formData.expected_time_minutes}
+                onChange={(e) => setFormData(prev => ({ ...prev, expected_time_minutes: e.target.value ? Number(e.target.value) : '' }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter expected time in minutes (optional)"
+                min="1"
               />
             </div>
 
@@ -464,6 +486,7 @@ const StepsLibraryManagement: React.FC = () => {
             <TableRow>
               <TableHead>Step Name</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead>Expected Time (mins)</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Updated</TableHead>
               <TableHead>Actions</TableHead>
@@ -472,7 +495,7 @@ const StepsLibraryManagement: React.FC = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   <div className="flex items-center justify-center space-x-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                     <span>Loading step library items...</span>
@@ -481,7 +504,7 @@ const StepsLibraryManagement: React.FC = () => {
               </TableRow>
             ) : stepLibraryItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                   No step library items found. Click "Add Step Item" to create your first step.
                 </TableCell>
               </TableRow>
@@ -493,6 +516,9 @@ const StepsLibraryManagement: React.FC = () => {
                     <div className="truncate" title={stepItem.description}>
                       {stepItem.description || 'No description'}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {stepItem.expected_time_minutes ? `${stepItem.expected_time_minutes} mins` : 'N/A'}
                   </TableCell>
                   <TableCell>
                     {stepItem.created_at ? new Date(stepItem.created_at).toLocaleDateString() : 'N/A'}
