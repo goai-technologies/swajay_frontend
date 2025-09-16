@@ -54,7 +54,7 @@ const OrderTypeManagement: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
 
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortBy, setSortBy] = useState<string>('updated_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
   const hasActiveFilters = useCallback(() => {
@@ -105,7 +105,7 @@ const OrderTypeManagement: React.FC = () => {
 
   const clearFilters = useCallback(() => {
     setSearch('');
-    setSortBy('created_at');
+    setSortBy('updated_at');
     setSortDir('desc');
     setCurrentPage(1);
     fetchOrderTypes(1);
@@ -351,7 +351,7 @@ const OrderTypeManagement: React.FC = () => {
             )}
           </button>
           <Button onClick={() => {
-            setSortBy('created_at');
+            setSortBy('updated_at');
             setSortDir('desc');
             setCurrentPage(1);
             fetchOrderTypes(1);
