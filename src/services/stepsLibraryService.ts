@@ -7,10 +7,10 @@ const getAuthHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem('authToken')}`,
 });
 
-export const createStepLibraryItem = async (step_name: string, description?: string) => {
+export const createStepLibraryItem = async (step_name: string, description?: string, expected_time_minutes?: number) => {
   const response = await axios.post(
     `${BASE_URL}${API_ENDPOINTS.STEPS_LIBRARY}`,
-    { step_name, description },
+    { step_name, description, expected_time_minutes },
     { headers: getAuthHeaders() }
   );
   return response.data;
@@ -29,10 +29,10 @@ export const getStepLibraryItemById = async (step_id: string) => {
   return response.data;
 };
 
-export const updateStepLibraryItem = async (step_id: string, step_name: string, description?: string) => {
+export const updateStepLibraryItem = async (step_id: string, step_name: string, description?: string, expected_time_minutes?: number) => {
   const response = await axios.put(
     `${BASE_URL}${API_ENDPOINTS.STEP_BY_ID(step_id)}`,
-    { step_name, description },
+    { step_name, description, expected_time_minutes },
     { headers: getAuthHeaders() }
   );
   return response.data;
