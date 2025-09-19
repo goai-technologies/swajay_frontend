@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -21,7 +23,9 @@ import {
   Building,
   Edit,
   X,
-  PauseCircle
+  PauseCircle,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 import EditOrderDialog from './EditOrderDialog';
@@ -128,6 +132,9 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
   const [statusComment, setStatusComment] = useState('');
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [reassignComment, setReassignComment] = useState('');
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
+  const [userSearchValue, setUserSearchValue] = useState('');
+  const [filteredUsers, setFilteredUsers] = useState<Array<{ id: string; username: string; user_type: string }>>([]);
 
   const fetchUsers = async () => {
     try {
@@ -157,6 +164,29 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
       }
     }
   }, [open, orderId, token]);
+
+  // Update filtered users when search value or users change
+  useEffect(() => {
+    console.log('useEffect triggered - searchValue:', userSearchValue, 'users:', users);
+    
+    if (!userSearchValue.trim()) {
+      setFilteredUsers(users);
+    } else {
+      const filtered = users.filter(user => {
+        const username = user.username;
+        const userType = user.user_type;
+        
+        const usernameMatch = patternMatch(username, userSearchValue);
+        const userTypeMatch = patternMatch(userType, userSearchValue);
+        
+        console.log(`Filtering - User: ${username}, Type: ${userType}, Username match: ${usernameMatch}, Type match: ${userTypeMatch}`);
+        
+        return usernameMatch || userTypeMatch;
+      });
+      console.log('Filtered result:', filtered);
+      setFilteredUsers(filtered);
+    }
+  }, [userSearchValue, users]);
 
   const fetchOrderLog = async () => {
     setLoading(true);
@@ -245,12 +275,35 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
     return user?.user_type === 'Admin' || user?.user_type === 'Supervisor';
   };
 
+  const getSelectedUserDisplayName = () => {
+    if (!assigneeId) return 'Choose a user';
+    const selectedUser = users.find(u => u.id === assigneeId);
+    return selectedUser ? `${selectedUser.username} (${selectedUser.user_type})` : 'Choose a user';
+  };
+
+  const getCurrentAssigneeId = () => {
+    if (!logData?.current_state?.current_step?.assigned_to) return null;
+    const currentAssignee = logData.current_state.current_step.assigned_to;
+    const user = users.find(u => 
+      u.username === currentAssignee.username && 
+      u.user_type === currentAssignee.user_type
+    );
+    return user?.id || null;
+  };
+
+  // Simple pattern match search function
+  const patternMatch = (text: string, query: string): boolean => {
+    if (!query || query.trim() === '') return true;
+    
+    const textLower = text.toLowerCase();
+    const queryLower = query.toLowerCase().trim();
+    
+    return textLower.includes(queryLower);
+  };
+
+
   const handleReassign = async () => {
     if (!orderId || !assigneeId || !token || !logData?.current_state?.current_step?.step_id) return;
-    if (!reassignComment.trim()) {
-      toast({ title: 'Comment required', description: 'Please enter a comment.', variant: 'destructive' });
-      return;
-    }
     try {
       setIsReassigning(true);
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.REASSIGN_STEP(orderId)}`, {
@@ -259,7 +312,11 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ step_id: logData.current_state.current_step.step_id, user_id: assigneeId, comment: reassignComment }),
+        body: JSON.stringify({ 
+          step_id: logData.current_state.current_step.step_id, 
+          user_id: assigneeId, 
+          comment: reassignComment.trim() || 'No comment provided' 
+        }),
       });
       if (!response.ok) {
         const text = await response.text();
@@ -761,36 +818,89 @@ const OrderLogDialog: React.FC<OrderLogDialogProps> = ({ orderId, open, onOpenCh
 
         {logData?.current_state?.current_step && (
           <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Reassign Step</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Select User</label>
-                  <Select value={assigneeId} onValueChange={setAssigneeId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a user" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map(u => (
-                        <SelectItem key={u.id} value={u.id}>{u.username} ({u.user_type})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={userSearchOpen}
+                        className="w-full justify-between"
+                      >
+                        {getSelectedUserDisplayName()}
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Search users..."
+                          value={userSearchValue}
+                          onValueChange={setUserSearchValue}
+                        />
+                        <CommandList>
+                          <CommandEmpty>No users found.</CommandEmpty>
+                          <CommandGroup>
+                            {filteredUsers.map((user) => {
+                              const currentAssigneeId = getCurrentAssigneeId();
+                              const isCurrentlyAssigned = currentAssigneeId === user.id;
+                              const isSelected = assigneeId === user.id;
+                              
+                              return (
+                                <CommandItem
+                                  key={user.id}
+                                  value={user.id}
+                                  onSelect={(currentValue) => {
+                                    if (!isCurrentlyAssigned) {
+                                      setAssigneeId(currentValue);
+                                      setUserSearchOpen(false);
+                                      setUserSearchValue('');
+                                    }
+                                  }}
+                                  className={`${isCurrentlyAssigned ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                  disabled={isCurrentlyAssigned}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      isCurrentlyAssigned ? 'opacity-100 text-green-600' : 'opacity-0'
+                                    }`}
+                                  />
+                                  <span className={isCurrentlyAssigned ? 'text-gray-500' : ''}>
+                                    {user.username} ({user.user_type})
+                                  </span>
+                                  {isCurrentlyAssigned && (
+                                    <span className="ml-auto text-xs text-gray-500">Currently assigned</span>
+                                  )}
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Comment</label>
+                  <label className="text-sm font-medium text-gray-700">Comment (Optional)</label>
                   <Textarea
                     value={reassignComment}
                     onChange={(e) => setReassignComment(e.target.value)}
-                    placeholder="Reason for reassignment..."
+                    placeholder="Reason for reassignment (optional)..."
                     className="min-h-[100px]"
                   />
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setReassignOpen(false)}>Cancel</Button>
-                  <Button onClick={handleReassign} disabled={!assigneeId || !reassignComment.trim() || isReassigning}>
+                  <Button 
+                    onClick={handleReassign} 
+                    disabled={!assigneeId || isReassigning || assigneeId === getCurrentAssigneeId()}
+                  >
                     {isReassigning ? 'Reassigning...' : 'Reassign'}
                   </Button>
                 </div>
