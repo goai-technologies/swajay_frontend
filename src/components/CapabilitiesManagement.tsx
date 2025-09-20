@@ -295,7 +295,7 @@ const CapabilitiesManagement: React.FC = () => {
   ), [isDialogOpen, selectedCapability, formData.capability_name, isSubmitting, handleFormSubmit]);
 
   return (
-    <div className="p-6 bg-gray-100 h-full overflow-y-auto">
+    <div className="p-2 sm:p-4 lg:p-6 bg-gray-100 h-full overflow-y-auto">
       <div className="flex justify-between items-center mb-6">
         <div>
           <p className="text-gray-600">Manage system capabilities and permissions</p>
@@ -431,64 +431,68 @@ const CapabilitiesManagement: React.FC = () => {
             </Button>
           </div>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Capability Name</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Updated</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span>Loading capabilities...</span>
-                  </div>
-                </TableCell>
+        <div className="max-h-96 sm:max-h-[32rem] lg:max-h-[34rem] overflow-y-auto border border-gray-200 rounded-lg">
+          <Table>
+            <TableHeader className="sticky top-0 bg-white">
+              <TableRow className="border-b border-gray-200">
+                <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Capability Name</TableHead>
+                <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</TableHead>
+                <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Updated</TableHead>
+                <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</TableHead>
               </TableRow>
-            ) : capabilities.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                  No capabilities found. Click "Add Capability" to create your first capability.
-                </TableCell>
-              </TableRow>
-            ) : (
-              capabilities.map(capability => (
-                <TableRow key={capability.id}>
-                  <TableCell className="font-medium">{capability.capability_name}</TableCell>
-                  <TableCell>
-                    {capability.created_at ? new Date(capability.created_at).toLocaleDateString() : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    {capability.updated_at ? new Date(capability.updated_at).toLocaleDateString() : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => openCapabilityDialog(capability)}
-                      >
-                        <Edit className="h-4 w-4 mr-2" /> Edit
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteCapability(capability.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" /> Delete
-                      </Button>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow className="border-b border-gray-100">
+                  <TableCell colSpan={4} className="px-2 sm:px-4 text-center py-8">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span>Loading capabilities...</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : capabilities.length === 0 ? (
+                <TableRow className="border-b border-gray-100">
+                  <TableCell colSpan={4} className="px-2 sm:px-4 text-center py-8 text-gray-500">
+                    No capabilities found. Click "Add Capability" to create your first capability.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                capabilities.map(capability => (
+                  <TableRow key={capability.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <TableCell className="px-2 sm:px-4 py-3 font-medium">{capability.capability_name}</TableCell>
+                    <TableCell className="px-2 sm:px-4 py-3">
+                      {capability.created_at ? new Date(capability.created_at).toLocaleDateString() : 'N/A'}
+                    </TableCell>
+                    <TableCell className="px-2 sm:px-4 py-3">
+                      {capability.updated_at ? new Date(capability.updated_at).toLocaleDateString() : 'N/A'}
+                    </TableCell>
+                    <TableCell className="px-2 sm:px-4 py-3">
+                      <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openCapabilityDialog(capability)}
+                          className="w-full sm:w-auto"
+                        >
+                          <Edit className="h-4 w-4 mr-2" /> Edit
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteCapability(capability.id)}
+                          className="w-full sm:w-auto"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       
       {CapabilityDialog}

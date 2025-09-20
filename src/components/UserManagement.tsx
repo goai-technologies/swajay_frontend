@@ -849,7 +849,7 @@ const UserManagement: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="p-2 sm:p-4 lg:p-6 bg-gray-100 h-screen overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-slate-800">User Management</h1>
@@ -1022,70 +1022,74 @@ const UserManagement: React.FC = () => {
               </Button>
             </div>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Username</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>User Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                      <span>Loading users...</span>
-                    </div>
-                  </TableCell>
+          <div className="max-h-96 sm:max-h-[32rem] lg:max-h-[34rem] overflow-y-auto border border-gray-200 rounded-lg">
+            <Table>
+              <TableHeader className="sticky top-0 bg-white">
+                <TableRow className="border-b border-gray-200">
+                  <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</TableHead>
+                  <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</TableHead>
+                  <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User Type</TableHead>
+                  <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</TableHead>
+                  <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</TableHead>
                 </TableRow>
-              ) : users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    No users found. Click "Add New User" to create your first user.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                users.map(user => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{user.user_type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={user.active ? 'default' : 'destructive'}
-                      >
-                        {user.active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => openUserDialog(user)}
-                        >
-                          <Edit className="h-4 w-4 mr-2" /> Edit
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => handleDeleteUser(user.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Delete
-                        </Button>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow className="border-b border-gray-100">
+                    <TableCell colSpan={5} className="px-2 sm:px-4 text-center py-8">
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <span>Loading users...</span>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : users.length === 0 ? (
+                  <TableRow className="border-b border-gray-100">
+                    <TableCell colSpan={5} className="px-2 sm:px-4 text-center py-8 text-gray-500">
+                      No users found. Click "Add New User" to create your first user.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  users.map(user => (
+                    <TableRow key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <TableCell className="px-2 sm:px-4 py-3">{user.username}</TableCell>
+                      <TableCell className="px-2 sm:px-4 py-3">{user.email}</TableCell>
+                      <TableCell className="px-2 sm:px-4 py-3">
+                        <Badge variant="outline">{user.user_type}</Badge>
+                      </TableCell>
+                      <TableCell className="px-2 sm:px-4 py-3">
+                        <Badge 
+                          variant={user.active ? 'default' : 'destructive'}
+                        >
+                          {user.active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="px-2 sm:px-4 py-3">
+                        <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => openUserDialog(user)}
+                            className="w-full sm:w-auto"
+                          >
+                            <Edit className="h-4 w-4 mr-2" /> Edit
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="w-full sm:w-auto"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
         
         {UserDialog}

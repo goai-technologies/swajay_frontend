@@ -256,12 +256,13 @@ const OrderEntry: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="h-screen bg-gray-50 overflow-y-auto">
+      <div className="p-2 sm:p-4 lg:p-6">
       
       {/* Header with clear */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-semibold text-gray-800">Order Entry</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">Order Entry</h1>
         </div>
         <button 
           type="button" 
@@ -290,10 +291,10 @@ const OrderEntry: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 lg:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* First Row: Client Order Number, Order Type, Clients, Prop Address Line 1 */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -375,7 +376,7 @@ const OrderEntry: React.FC = () => {
           </div>
 
           {/* Second Row: Prop Address Line 2, City, State, Zip Code */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -442,7 +443,7 @@ const OrderEntry: React.FC = () => {
           </div>
 
           {/* Third Row: County, Owner Name, Online/Ground, Rush File */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -550,6 +551,7 @@ const OrderEntry: React.FC = () => {
             </button>
           </div>
         </form>
+      </div>
       </div>
     </div>
   );

@@ -302,7 +302,7 @@ const OrderTypeManagement: React.FC = () => {
   ), [isDialogOpen, selectedOrderType, formData.order_type_name, isSubmitting, handleFormSubmit]);
 
   return (
-    <div className="p-6 bg-gray-100 h-full overflow-y-auto">
+    <div className="p-2 sm:p-4 lg:p-6 bg-gray-100 h-full overflow-y-auto">
       <div className="flex justify-between items-center mb-6">
         <div>
           <p className="text-gray-600">Manage order types and their configurations</p>
@@ -438,71 +438,76 @@ const OrderTypeManagement: React.FC = () => {
             </Button>
           </div>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order Type Name</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Updated</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span>Loading order types...</span>
-                  </div>
-                </TableCell>
+        <div className="max-h-96 sm:max-h-[32rem] lg:max-h-[34rem] overflow-y-auto border border-gray-200 rounded-lg">
+          <Table>
+            <TableHeader className="sticky top-0 bg-white">
+              <TableRow className="border-b border-gray-200">
+                <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order Type Name</TableHead>
+                <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</TableHead>
+                <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Updated</TableHead>
+                <TableHead className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</TableHead>
               </TableRow>
-            ) : orderTypes.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                  No order types found. Click "Add Order Type" to create your first order type.
-                </TableCell>
-              </TableRow>
-            ) : (
-              orderTypes.map(orderType => (
-                <TableRow key={orderType.id}>
-                  <TableCell className="font-medium">{orderType.order_type_name}</TableCell>
-                  <TableCell>
-                    {orderType.created_at ? new Date(orderType.created_at).toLocaleDateString() : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    {orderType.updated_at ? new Date(orderType.updated_at).toLocaleDateString() : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => openOrderTypeDialog(orderType)}
-                      >
-                        <Edit className="h-4 w-4 mr-2" /> Edit
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleManageSteps(orderType.id)}
-                      >
-                        <ArrowRight className="h-4 w-4 mr-2" /> Manage Steps
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteOrderType(orderType.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" /> Delete
-                      </Button>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow className="border-b border-gray-100">
+                  <TableCell colSpan={4} className="px-2 sm:px-4 text-center py-8">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span>Loading order types...</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : orderTypes.length === 0 ? (
+                <TableRow className="border-b border-gray-100">
+                  <TableCell colSpan={4} className="px-2 sm:px-4 text-center py-8 text-gray-500">
+                    No order types found. Click "Add Order Type" to create your first order type.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                orderTypes.map(orderType => (
+                  <TableRow key={orderType.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <TableCell className="px-2 sm:px-4 py-3 font-medium">{orderType.order_type_name}</TableCell>
+                    <TableCell className="px-2 sm:px-4 py-3">
+                      {orderType.created_at ? new Date(orderType.created_at).toLocaleDateString() : 'N/A'}
+                    </TableCell>
+                    <TableCell className="px-2 sm:px-4 py-3">
+                      {orderType.updated_at ? new Date(orderType.updated_at).toLocaleDateString() : 'N/A'}
+                    </TableCell>
+                    <TableCell className="px-2 sm:px-4 py-3">
+                      <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openOrderTypeDialog(orderType)}
+                          className="w-full sm:w-auto"
+                        >
+                          <Edit className="h-4 w-4 mr-2" /> Edit
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleManageSteps(orderType.id)}
+                          className="w-full sm:w-auto"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-2" /> Manage Steps
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteOrderType(orderType.id)}
+                          className="w-full sm:w-auto"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       
       {OrderTypeDialog}
