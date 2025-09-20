@@ -89,6 +89,7 @@ const Navigation: React.FC<NavigationProps> = ({ isMobile, sidebarOpen, onViewCh
                       navigate('/order-types');
                     } else {
                       // All other views are handled within the dashboard
+                      onViewChange(item.id);
                       navigate(`/dashboard/${item.id}`);
                     }
                   }}

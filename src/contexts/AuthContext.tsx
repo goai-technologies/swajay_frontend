@@ -32,7 +32,7 @@ const createAxiosInstance = (token: string | null, logoutCallback?: () => void) 
 
     const instance = axios.create({
       baseURL: API_CONFIG.BASE_URL,
-      timeout: API_CONFIG.TIMEOUT,
+      timeout: Number(API_CONFIG.TIMEOUT),
       headers
     });
 
@@ -76,7 +76,7 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Error creating initial axios instance:', error);
       return axios.create({
         baseURL: API_CONFIG.BASE_URL,
-        timeout: API_CONFIG.TIMEOUT,
+        timeout: Number(API_CONFIG.TIMEOUT),
         headers: { 'Content-Type': 'application/json' }
       });
     }
@@ -97,7 +97,7 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Error resetting axios instance:', error);
       setAxiosInstance(axios.create({
         baseURL: API_CONFIG.BASE_URL,
-        timeout: API_CONFIG.TIMEOUT,
+        timeout: Number(API_CONFIG.TIMEOUT),
         headers: { 'Content-Type': 'application/json' }
       }));
     }
@@ -204,14 +204,14 @@ export const Authprovider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setAxiosInstance(newAxiosInstance);
               } catch (error) {
                 console.error('Error creating axios instance with stored token:', error);
-                setAxiosInstance(axios.create({
-                  baseURL: API_CONFIG.BASE_URL,
-                  timeout: API_CONFIG.TIMEOUT,
-                  headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${storedToken}`
-                  }
-                }));
+      setAxiosInstance(axios.create({
+        baseURL: API_CONFIG.BASE_URL,
+        timeout: Number(API_CONFIG.TIMEOUT),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${storedToken}`
+        }
+      }));
               }
             } else {
               console.error('Invalid user data structure:', parsedUser);

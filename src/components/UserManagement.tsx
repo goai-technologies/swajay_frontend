@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_CONFIG, API_ENDPOINTS } from '@/constants/api';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,12 +13,14 @@ import { US_STATES } from '@/constants/states';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { getAllOrderTypes } from '@/services/orderTypeService';
 import { getAllCapabilities } from '@/services/capabilitiesService';
+import { resetPassword } from '@/services/passwordService';
 import { 
   Edit, 
   Trash2, 
   UserPlus, 
   Lock, 
-  User as UserIcon 
+  User as UserIcon,
+  Key
 } from 'lucide-react';
 
 // Constants for dropdown options
@@ -109,7 +111,13 @@ const UserManagement: React.FC = () => {
   const [capabilities, setCapabilities] = useState<{id: string, capability_name: string}[]>([]);
   const [orderTypesLoading, setOrderTypesLoading] = useState(false);
   const [capabilitiesLoading, setCapabilitiesLoading] = useState(false);
-  const { token } = useAuth();
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [passwordResetData, setPasswordResetData] = useState({
+    new_password: '',
+    confirm_password: ''
+  });
+  const [isPasswordResetting, setIsPasswordResetting] = useState(false);
+  const { token, user: currentUser } = useAuth();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -209,6 +217,8 @@ const UserManagement: React.FC = () => {
       order_types: []
     });
     setSelectedUser(null);
+    setShowPasswordReset(false);
+    setPasswordResetData({ new_password: '', confirm_password: '' });
   }, []);
 
   const handleCreateUser = useCallback(async () => {
@@ -405,6 +415,55 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!selectedUser || !token || isPasswordResetting) return;
+
+    // Validation
+    if (!passwordResetData.new_password || passwordResetData.new_password.length < 8) {
+      toast({
+        title: "Validation Error",
+        description: "Password must be at least 8 characters",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (passwordResetData.new_password !== passwordResetData.confirm_password) {
+      toast({
+        title: "Validation Error",
+        description: "Passwords do not match",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsPasswordResetting(true);
+
+    try {
+      const result = await resetPassword(selectedUser.id, passwordResetData, token);
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Password reset successfully"
+        });
+        setShowPasswordReset(false);
+        setPasswordResetData({ new_password: '', confirm_password: '' });
+      } else {
+        throw new Error(result.message || 'Failed to reset password');
+      }
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset password",
+        variant: "destructive"
+      });
+    } finally {
+      setIsPasswordResetting(false);
+    }
+  };
+
   const openUserDialog = (user?: User) => {
     if (user) {
       setSelectedUser(user);
@@ -560,6 +619,9 @@ const UserManagement: React.FC = () => {
           <DialogTitle className="text-2xl font-bold text-gray-900">
             {selectedUser ? 'Edit User' : 'Add User'}
           </DialogTitle>
+          <DialogDescription>
+            {selectedUser ? 'Update user information and permissions' : 'Create a new user account with appropriate roles and permissions'}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -625,6 +687,110 @@ const UserManagement: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Password Reset Section - Only for Admin/Supervisor when editing */}
+            {(() => {
+              const shouldShow = selectedUser && (currentUser?.user_type === 'Admin' || currentUser?.user_type === 'Supervisor');
+              console.log('Password reset section check:', {
+                selectedUser: !!selectedUser,
+                currentUserType: currentUser?.user_type,
+                shouldShow,
+                showPasswordReset
+              });
+              return shouldShow;
+            })() && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Key className="w-5 h-5 mr-2 text-blue-600" />
+                  Password Reset
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Reset Password for {selectedUser.username}</p>
+                      <p className="text-xs text-gray-500">Only admins and supervisors can reset user passwords</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Reset Password button clicked, current state:', showPasswordReset);
+                        setShowPasswordReset(!showPasswordReset);
+                      }}
+                      className="flex items-center space-x-2"
+                    >
+                      <Lock className="h-4 w-4" />
+                      <span>{showPasswordReset ? 'Cancel' : 'Reset Password'}</span>
+                    </Button>
+                  </div>
+
+                  {showPasswordReset && (
+                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">
+                            New Password *
+                          </label>
+                          <Input
+                            type="password"
+                            value={passwordResetData.new_password}
+                            onChange={(e) => {
+                              console.log('New password input changed:', e.target.value);
+                              setPasswordResetData(prev => ({ ...prev, new_password: e.target.value }));
+                            }}
+                            placeholder="Enter new password"
+                            required
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">
+                            Confirm Password *
+                          </label>
+                          <Input
+                            type="password"
+                            value={passwordResetData.confirm_password}
+                            onChange={(e) => {
+                              console.log('Confirm password input changed:', e.target.value);
+                              setPasswordResetData(prev => ({ ...prev, confirm_password: e.target.value }));
+                            }}
+                            placeholder="Confirm new password"
+                            required
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-end space-x-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setShowPasswordReset(false);
+                            setPasswordResetData({ new_password: '', confirm_password: '' });
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handlePasswordReset}
+                          disabled={isPasswordResetting}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          {isPasswordResetting && (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          )}
+                          {isPasswordResetting ? 'Resetting...' : 'Reset Password'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Contact Information Section */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -845,7 +1011,7 @@ const UserManagement: React.FC = () => {
         </div>
       </DialogContent>
     </Dialog>
-  ), [isDialogOpen, selectedUser, formData, isSubmitting, handleFormSubmit, handleInputChange, handleCloseDialog, resetForm, clients, stateOptions, capabilities, orderTypes]);
+  ), [isDialogOpen, selectedUser, formData, isSubmitting, handleFormSubmit, handleInputChange, handleCloseDialog, resetForm, clients, stateOptions, capabilities, orderTypes, showPasswordReset, passwordResetData, isPasswordResetting, currentUser, handlePasswordReset]);
 
   return (
     <ErrorBoundary>

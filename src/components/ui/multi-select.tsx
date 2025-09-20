@@ -113,8 +113,8 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                       className="mr-1 mb-1"
                     >
                       {showAbbreviation && option.abbreviation ? option.abbreviation : option.label}
-                      <button
-                        className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      <span
+                        className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             handleUnselect(option.value)
@@ -125,9 +125,11 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                           e.stopPropagation()
                         }}
                         onClick={() => handleUnselect(option.value)}
+                        role="button"
+                        tabIndex={0}
                       >
                         <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                      </button>
+                      </span>
                     </Badge>
                   ))}
                   {selected.length > maxDisplay && (

@@ -34,6 +34,22 @@ const AppLayout: React.FC = () => {
     }
   }, [view, location.pathname, setCurrentView]);
 
+  // Sync currentView with URL after login (when user becomes available)
+  React.useEffect(() => {
+    if (user) {
+      // Extract view from current URL path
+      const pathSegments = location.pathname.split('/');
+      if (pathSegments.length >= 3 && pathSegments[1] === 'dashboard') {
+        const urlView = pathSegments[2];
+        if (urlView && urlView !== currentView) {
+          setCurrentView(urlView);
+        }
+      } else if (location.pathname === '/dashboard' && currentView !== 'dashboard') {
+        setCurrentView('dashboard');
+      }
+    }
+  }, [user, location.pathname, currentView, setCurrentView]);
+
 
 
 
